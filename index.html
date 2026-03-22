@@ -242,6 +242,7 @@ function NineSquare() {
   const [tutorialPage, setTutorialPage] = useState(0);
   const tutorialTouchStart = useRef(null);
   const [showBadgeOverlay, setShowBadgeOverlay] = useState(false);
+  const [newBadgeIds, setNewBadgeIds] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(saved.current?.soundEnabled !== false);
   const [musicEnabled, setMusicEnabled] = useState(saved.current?.musicEnabled || false);
@@ -454,12 +455,21 @@ function NineSquare() {
           classicTotalSolvesRef.current=nt; classicTotalTimeRef.current=ntt;
           setClassicTotalSolves(nt); setClassicTotalTime(ntt);
           if (clearSec<classicBestTimeRef.current) { classicBestTimeRef.current=clearSec; setClassicBestTime(clearSec); }
-          const nb={...todayBadgesRef.current};
+          const oldBadges={...todayBadgesRef.current};
+          const nb={...oldBadges};
           if (nSolves>=10) nb.solver=true; if (clearSec<20) nb.quick=true;
           if (builderActiveRef.current) nb.builder=true;
           if (clearSec<=ntt/nt) nb.speedy=true;
+          const newlyEarned=BADGE_DEFS.filter(b=>nb[b.id]&&!oldBadges[b.id]).map(b=>b.id);
           todayBadgesRef.current=nb; setTodayBadges(nb);
-          setGameState(GS.ROUND_CLEAR); setTimeout(()=>prepareRound(1),1200);
+          if (Object.values(nb).every(Boolean)) setDailyStreak(prev=>prev<1?1:prev);
+          setGameState(GS.ROUND_CLEAR);
+          if (newlyEarned.length>0) {
+            setNewBadgeIds(newlyEarned);
+            setTimeout(()=>setShowBadgeOverlay(true),1300);
+          } else {
+            setTimeout(()=>prepareRound(1),1200);
+          }
           setTimeout(()=>persistState(),100);
         } else if (currentMode===MODES.DAILY) { setDailyTime(clearSec); setGameState(GS.DAILY_DONE); setTimeout(()=>persistState(),100); }
         else if (currentMode===MODES.ENDURANCE) {
@@ -905,21 +915,48 @@ function NineSquare() {
     isPlaying&&mode!==MODES.CLASSIC&&e("div",{style:{flex:1,minHeight:"60px"}}),
 
     // BADGE OVERLAY
-    showBadgeOverlay&&e("div",{onClick:()=>setShowBadgeOverlay(false),
+    showBadgeOverlay&&e("div",{onClick:()=>{
+        setShowBadgeOverlay(false);
+        // If we came from a classic solve with new badges, resume gameplay
+        if(newBadgeIds.length>0&&gameState===GS.ROUND_CLEAR){setNewBadgeIds([]);setTimeout(()=>prepareRound(1),200);}
+        else setNewBadgeIds([]);
+      },
       style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
         alignItems:"center",justifyContent:"center",zIndex:200,background:TH.overlayBg,cursor:"pointer"}},
-      e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.text,letterSpacing:"3px",marginBottom:"20px"}},"BADGES"),
+      e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.text,letterSpacing:"3px",marginBottom:"20px"}},
+        newBadgeIds.length>0?"BADGE EARNED!":"BADGES"),
+      // Streak encouragement
+      newBadgeIds.length>0&&e("div",{style:{fontSize:"14px",fontFamily:F_BODY,fontWeight:600,color:TH.textMid,
+        marginBottom:"16px",textAlign:"center"}},
+        Object.values(todayBadges).every(Boolean)
+          ?"🔥 All 5 badges earned! Streak: "+Math.max(dailyStreak,1)
+          :"Earn all 5 badges today to build your streak!"),
       e("div",{style:{display:"flex",flexDirection:"column",gap:"14px",maxWidth:"320px",width:"88vw"}},
-        BADGE_DEFS.map(b=>e("div",{key:b.id,style:{display:"flex",alignItems:"center",gap:"12px",padding:"8px 0",
-          opacity:todayBadges[b.id]?1:0.35}},
-          e("span",{style:{fontSize:"28px",width:"32px",textAlign:"center",
-            filter:todayBadges[b.id]?"drop-shadow(0 0 6px rgba("+TH.glow+",0.5))":"none"}},b.icon),
-          e("div",null,
-            e("div",{style:{fontSize:"18px",fontFamily:F_DISPLAY,color:todayBadges[b.id]?TH.accent:TH.textDim}},b.name),
-            e("div",{style:{fontSize:"14px",fontFamily:F_BODY,color:TH.textMid}},b.desc))
-        ))
+        BADGE_DEFS.map(b=>{
+          const isNew=newBadgeIds.includes(b.id);
+          return e("div",{key:b.id,style:{display:"flex",alignItems:"center",gap:"12px",padding:"8px 0",
+            opacity:todayBadges[b.id]?1:0.35,
+            background:isNew?"rgba("+TH.glow+",0.08)":"transparent",
+            borderRadius:isNew?"8px":"0",padding:isNew?"8px 12px":"8px 0"}},
+            e("span",{style:{fontSize:"28px",width:"32px",textAlign:"center",
+              filter:todayBadges[b.id]?"drop-shadow(0 0 6px rgba("+TH.glow+",0.5))":"none",
+              animation:isNew?"titleZoomPop 0.4s ease both":"none"}},b.icon),
+            e("div",null,
+              e("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},
+                e("span",{style:{fontSize:"18px",fontFamily:F_DISPLAY,color:todayBadges[b.id]?TH.accent:TH.textDim}},b.name),
+                isNew&&e("span",{style:{fontSize:"11px",fontFamily:F_DISPLAY,color:TH.primary,
+                  background:"rgba("+TH.glow+",0.15)",padding:"2px 6px",borderRadius:"4px",letterSpacing:"1px"}},"NEW!")),
+              e("div",{style:{fontSize:"14px",fontFamily:F_BODY,color:TH.textMid}},b.desc))
+          );
+        })
       ),
-      e("div",{style:{marginTop:"20px",fontSize:"14px",fontFamily:F_BODY,color:TH.textDim}},"Tap anywhere to close")
+      // Share button
+      e("button",{onClick:(ev)=>{ev.stopPropagation();handleShare();},
+        style:{marginTop:"18px",padding:"12px 28px",fontSize:"18px",fontFamily:F_DISPLAY,
+          background:"rgba("+TH.borderGlow+",0.12)",border:"1px solid rgba("+TH.borderGlow+",0.22)",
+          borderRadius:"6px",color:TH.primary,cursor:"pointer",letterSpacing:"2px"}},"SHARE"),
+      e("div",{style:{marginTop:"14px",fontSize:"14px",fontFamily:F_BODY,color:TH.textDim}},
+        newBadgeIds.length>0?"Tap to continue playing":"Tap anywhere to close")
     ),
 
     // GRID
