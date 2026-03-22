@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>9SQUARE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Changa+One&family=Exo+2:wght@400;600;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Changa+One&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; overflow: hidden; background: #060810; }
+  @keyframes fadeUp { 0% { opacity:1; transform:translateY(0); } 100% { opacity:0; transform:translateY(-40px); } }
+  @keyframes flashFade { 0% { opacity:1; } 100% { opacity:0; } }
+  @keyframes pulse { 0%, 100% { opacity:0.6; } 50% { opacity:1; } }
+  @keyframes logoPulse { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.04); } }
+  @keyframes triFadeIn1 { 0% { opacity:0; } 100% { opacity:1; } }
+  @keyframes triFadeIn2 { 0%,33% { opacity:0; } 100% { opacity:1; } }
+  @keyframes triFadeIn3 { 0%,55% { opacity:0; } 100% { opacity:1; } }
+  @keyframes triFadeIn4 { 0%,75% { opacity:0; } 100% { opacity:1; } }
+  @keyframes presentsIn { 0% { opacity:0; transform:translateY(8px); } 100% { opacity:1; transform:translateY(0); } }
+  @keyframes titleZoomPop { 0% { opacity:0; transform:scale(0.3); } 60% { opacity:1; transform:scale(1.12); } 80% { transform:scale(0.97); } 100% { opacity:1; transform:scale(1); } }
+  @keyframes titleGlowBurst { 0% { opacity:0; transform:scale(0.5); } 40% { opacity:0.6; } 100% { opacity:0; transform:scale(2.5); } }
+  @keyframes tutRedFlash { 0% { opacity:0; transform:scale(0.5); } 30% { opacity:1; transform:scale(1.1); } 50% { opacity:1; transform:scale(1); } 70% { opacity:1; } 100% { opacity:0; } }
+  @keyframes tutResetFade { 0%,60% { opacity:1; } 100% { opacity:0; } }
+  @keyframes tutResetLoop { 0%,60% { opacity:1; } 80% { opacity:0; } 100% { opacity:0; } }
+  @keyframes staggerIn1 { 0% { opacity:0; transform:translateY(12px); } 100% { opacity:1; transform:translateY(0); } }
+  @keyframes staggerIn2 { 0%,30% { opacity:0; transform:translateY(12px); } 100% { opacity:1; transform:translateY(0); } }
+  @keyframes staggerIn3 { 0%,50% { opacity:0; transform:translateY(12px); } 100% { opacity:1; transform:translateY(0); } }
+  @keyframes readyPop { 0% { opacity:0; transform:scale(0.8); } 50% { transform:scale(1.05); } 100% { opacity:1; transform:scale(1); } }
+  button:active, div[role="button"]:active { opacity: 0.85; }
+  .uni-star { clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+  .uni-heart { clip-path: polygon(50% 85%, 5% 40%, 5% 20%, 25% 0%, 50% 20%, 75% 0%, 95% 20%, 95% 40%); }
+  .uni-diamond { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useEffect, useRef, useCallback } = React;
+const e = React.createElement;
+
+
+const F_DISPLAY = "'Changa One', 'Impact', 'Arial Black', sans-serif";
+const F_BODY = "'Exo 2', 'Segoe UI', 'Helvetica Neue', sans-serif";
+
+// Color themes — full UI
+const THEMES = {
+  green: {
+    name:"Green", primary:"#5cc080", primaryBright:"#80e0a8", isLight:false,
+    glow:"80,255,120", correctA:"80,220,110", correctB:"40,140,60", hue:145,
+    danger:"#e83350", bg:"#060810", 
+    text:"#d4eee0", textMid:"#4a8a65", textDim:"#3a5a48", textDimmer:"#2e4e3c",
+    accent:"#70c890", accentDim:"#2a4a38",
+    surface:"rgba(8,18,14,0.92)", borderGlow:"70,190,110",
+    btnBg:"linear-gradient(145deg,#10221a,#081410)", btnBorder:"rgba(70,190,110,0.22)",
+    overlayBg:"rgba(6,8,16,0.98)",
+  },
+  pink: {
+    name:"Pink", primary:"#e060a0", primaryBright:"#f0a0c8", isLight:false,
+    glow:"255,100,180", correctA:"220,80,140", correctB:"140,40,80", hue:330,
+    danger:"#e83350", bg:"#100610",
+    text:"#f0dce8", textMid:"#a06080", textDim:"#5a3a4a", textDimmer:"#4a2a3a",
+    accent:"#d080b0", accentDim:"#4a2038",
+    surface:"rgba(18,8,14,0.92)", borderGlow:"190,70,130",
+    btnBg:"linear-gradient(145deg,#22101a,#140810)", btnBorder:"rgba(190,70,130,0.22)",
+    overlayBg:"rgba(16,6,12,0.98)",
+  },
+  yellow: {
+    name:"Yellow", primary:"#d0b040", primaryBright:"#e8d880", isLight:false,
+    glow:"255,220,80", correctA:"210,180,60", correctB:"140,120,30", hue:50,
+    danger:"#e83350", bg:"#0c0a04",
+    text:"#f0ecd4", textMid:"#8a8050", textDim:"#5a5438", textDimmer:"#4a4428",
+    accent:"#c0a840", accentDim:"#3a3410",
+    surface:"rgba(14,12,6,0.92)", borderGlow:"190,170,60",
+    btnBg:"linear-gradient(145deg,#1a1808,#100e04)", btnBorder:"rgba(190,170,60,0.22)",
+    overlayBg:"rgba(12,10,4,0.98)",
+  },
+  rainbow: {
+    name:"Rainbow", primary:"#60c0e0", primaryBright:"#a0e0f0", isLight:false, isRainbow:true,
+    glow:"100,240,255", correctA:"80,200,220", correctB:"40,120,140", hue:190,
+    danger:"#e83350", bg:"#060810",
+    text:"#e0f0f4", textMid:"#5090a0", textDim:"#3a5058", textDimmer:"#2a4048",
+    accent:"#80d0e0", accentDim:"#1a3040",
+    surface:"rgba(8,14,18,0.92)", borderGlow:"70,170,190",
+    btnBg:"linear-gradient(145deg,#0a1a22,#061218)", btnBorder:"rgba(70,170,190,0.22)",
+    overlayBg:"rgba(6,8,16,0.98)",
+    rainbowCells:[
+      {a:"255,70,70",b:"180,30,30",glow:"255,80,80"},
+      {a:"255,140,50",b:"180,90,20",glow:"255,160,60"},
+      {a:"255,220,50",b:"180,160,20",glow:"255,230,70"},
+      {a:"80,220,100",b:"30,150,50",glow:"100,255,120"},
+      {a:"50,200,220",b:"20,140,160",glow:"70,230,255"},
+      {a:"80,120,255",b:"40,70,180",glow:"100,140,255"},
+      {a:"160,80,255",b:"110,40,180",glow:"180,100,255"},
+      {a:"220,70,200",b:"160,30,140",glow:"240,90,220"},
+      {a:"255,70,120",b:"180,30,70",glow:"255,90,140"},
+    ],
+    bgColors:["#e06060","#e0c040","#40c080","#6080e0"],
+  },
+  unicorn: {
+    name:"Unicorn", primary:"#c080d0", primaryBright:"#e0b0f0", isLight:true, isUnicorn:true,
+    glow:"200,140,230", correctA:"190,120,210", correctB:"160,90,180", hue:280,
+    danger:"#e088aa", bg:"#f4f0f8",
+    text:"#3a2840", textMid:"#8a70a0", textDim:"#a898b0", textDimmer:"#c0b8c8",
+    accent:"#b070c0", accentDim:"#e8e0f0",
+    surface:"rgba(235,228,242,0.95)", borderGlow:"180,140,200",
+    btnBg:"linear-gradient(145deg,#e8e0f0,#dcd4e8)", btnBorder:"rgba(180,140,200,0.35)",
+    overlayBg:"rgba(244,240,248,0.98)",
+    neutralCell:"linear-gradient(145deg,#ddd6e6,#d0c8da)",
+    countdownCell:"linear-gradient(145deg,#e4dced,#d8d0e2)",
+    fadingCell:"#e8e2f0",
+    gridBg:"rgba(230,224,238,0.9)",
+    wrongGridBg:"rgba(252,220,230,0.9)",
+  },
+};
+
+const AudioEngine = {
+  ctx: null,
+  enabled: true,
+  init() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx.state === "suspended") this.ctx.resume();
+  },
+  playTone(step, type) {
+    if (!this.enabled) return;
+    this.init();
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === "correct") {
+      const freqs = [261.6,293.7,329.6,349.2,392.0,440.0,493.9,523.3,587.3];
+      osc.frequency.value = freqs[step]||523.3; osc.type = "sine";
+      gain.gain.setValueAtTime(0.15,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.25);
+      osc.start(); osc.stop(ctx.currentTime+0.25);
+    } else if (type === "wrong") {
+      // Soft two-tone descending "dip" — much gentler than the old sawtooth buzz
+      osc.frequency.setValueAtTime(320,ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180,ctx.currentTime+0.15);
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.1,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.25);
+      osc.start(); osc.stop(ctx.currentTime+0.25);
+    } else if (type === "clear") {
+      [523.3,659.3,784.0].forEach((f,i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = f; o.type = "sine";
+        g.gain.setValueAtTime(0.12,ctx.currentTime+i*0.08);
+        g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+i*0.08+0.3);
+        o.start(ctx.currentTime+i*0.08); o.stop(ctx.currentTime+i*0.08+0.3);
+      });
+    } else if (type === "countdown") {
+      osc.frequency.value = 660; osc.type = "sine";
+      gain.gain.setValueAtTime(0.08,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.15);
+      osc.start(); osc.stop(ctx.currentTime+0.15);
+    }
+  }
+};
+
+function shuffleArray(seed) {
+  const arr = [1,2,3,4,5,6,7,8,9];
+  if (seed !== undefined) {
+    let s = seed;
+    const rng = () => { s = (s*16807+0)%2147483647; return (s-1)/2147483646; };
+    for (let i=arr.length-1;i>0;i--) { const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  } else {
+    for (let i=arr.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  }
+  return arr;
+}
+function getDailySeed() { const d=new Date(); return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
+function formatTimer(s) { return Math.max(0,Math.min(99,Math.ceil(s))).toString().padStart(2,"0"); }
+function formatTimeSec(s) { return s.toFixed(2); }
+
+const GS = { SPLASH:7, MENU:0, COUNTDOWN:1, PLAYING:2, ROUND_CLEAR:3, GAME_OVER:4, DAILY_DONE:5, READY:6 };
+const MODES = { CLASSIC:"CLASSIC", DAILY:"DAILY", ENDURANCE:"ENDURANCE" };
+const BADGE_DEFS = [
+  { id:"solver", name:"Solver", desc:"Solve 10 puzzles in Classic mode today", icon:"◆" },
+  { id:"quick", name:"Quick Hands", desc:"Solve any puzzle in under 20 seconds", icon:"⚡" },
+  { id:"builder", name:"Surgeon", desc:"Solve with only forward progress", icon:"▲" },
+  { id:"speedy", name:"Speedy", desc:"Solve at or below your all-time average speed", icon:"◎" },
+  { id:"bragger", name:"Badge Bragger", desc:"Share your stats with a friend", icon:"★" },
+];
+
+// SVG Xonsult logo as component
+function XonsultLogo({size,color,animated}) {
+  const s=size||120;
+  const tris = [
+    {points:"0,320.194 149.19,171.003 0,21.813",fill:"#1a4a30",anim:"triFadeIn1 2.4s ease both"},
+    {points:"21.813,0 171.002,149.19 320.194,0",fill:"#3a8a5a",anim:"triFadeIn2 2.4s ease both"},
+    {points:"320.194,342.005 171.004,192.814 21.813,342.005",fill:"#5cc080",anim:"triFadeIn3 2.4s ease both"},
+    {points:"342.005,21.812 192.815,171.003 342.005,320.194",fill:"#80e0a8",anim:"triFadeIn4 2.4s ease both"},
+  ];
+  return e("svg",{width:s,height:s,viewBox:"0 0 342 342",fill:"none",xmlns:"http://www.w3.org/2000/svg"},
+    tris.map((t,i) => e("polygon",{key:i,points:t.points,fill:t.fill,
+      style:animated?{animation:t.anim}:{}}))
+  );
+}
+
+function AnimatedDots() {
+  const [dots, setDots] = useState("");
+  useEffect(() => {
+    const seq = ["",".","..","...","..",".",""]; 
+    let i = 0;
+    const iv = setInterval(() => { i=(i+1)%seq.length; setDots(seq[i]); }, 450);
+    return () => clearInterval(iv);
+  }, []);
+  return e("span",{style:{display:"inline-block",minWidth:"30px",textAlign:"left",fontFamily:"'Caveat', cursive",
+    fontSize:"36px",color:"#4a8a65"}},dots);
+}
+
+const VENMO_URL = "https://venmo.com/code?user_id=2667315250331648157&created=1774120227";
+const PAYPAL_URL = "https://www.paypal.com/qrcodes/managed/3a1c094c-fed1-411d-ac9e-794c29b43443";
+
+// localStorage persistence
+function saveGame(data) { try { localStorage.setItem("9sq", JSON.stringify(data)); } catch(e){} }
+function loadGame() { try { const d=localStorage.getItem("9sq"); return d?JSON.parse(d):null; } catch(e){ return null; } }
+function getTodayStr() { const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+
+function NineSquare() {
+  // Load saved data
+  const saved = useRef(loadGame());
+  const today = getTodayStr();
+  const isNewDay = !saved.current || saved.current.lastDate !== today;
+
+  const [mode, setMode] = useState(null);
+  const [gameState, setGameState] = useState(GS.SPLASH);
+  const [splashOpacity, setSplashOpacity] = useState(0);
+  const [splashPhase, setSplashPhase] = useState(0);
+  const [splashReady, setSplashReady] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialPage, setTutorialPage] = useState(0);
+  const tutorialTouchStart = useRef(null);
+  const [showBadgeOverlay, setShowBadgeOverlay] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(saved.current?.soundEnabled !== false);
+  const [musicEnabled, setMusicEnabled] = useState(saved.current?.musicEnabled || false);
+  const [hapticEnabled, setHapticEnabled] = useState(saved.current?.hapticEnabled !== false);
+  const [themeName, setThemeName] = useState(saved.current?.theme || "green");
+  const [grid, setGrid] = useState(() => shuffleArray());
+  const [nextTarget, setNextTarget] = useState(1);
+  const [cellStates, setCellStates] = useState(Array(9).fill("neutral"));
+  const [round, setRound] = useState(1);
+  const [timer, setTimer] = useState(0);
+  const [wrongFlash, setWrongFlash] = useState(false);
+  const [streakGlow, setStreakGlow] = useState(0);
+  const [lastClearTime, setLastClearTime] = useState(0);
+  const [showModeSelect, setShowModeSelect] = useState(false);
+  const [countdownPhase, setCountdownPhase] = useState(0);
+  const [bgRotation, setBgRotation] = useState(0);
+  const [bgPulse, setBgPulse] = useState(0);
+  const [classicSolves, setClassicSolves] = useState(isNewDay ? 0 : (saved.current?.classicSolvesToday||0));
+  const [classicBestTime, setClassicBestTime] = useState(saved.current?.classicBestTime||Infinity);
+  const [classicTotalTime, setClassicTotalTime] = useState(saved.current?.classicTotalTime||0);
+  const [classicTotalSolves, setClassicTotalSolves] = useState(saved.current?.classicTotalSolves||0);
+  const [todayBadges, setTodayBadges] = useState(isNewDay ? {solver:false,quick:false,builder:false,speedy:false,bragger:false} : (saved.current?.todayBadges||{solver:false,quick:false,builder:false,speedy:false,bragger:false}));
+  const [dailyStreak, setDailyStreak] = useState(() => {
+    if (!saved.current) return 0;
+    const s = saved.current;
+    // If yesterday had all 5 badges, streak continues. If new day, check if yesterday completed.
+    if (isNewDay && s.allBadgesYesterday) return (s.dailyStreak||0) + 1;
+    if (isNewDay && !s.allBadgesYesterday) return 0;
+    return s.dailyStreak||0;
+  });
+  const [showBadges, setShowBadges] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [enduranceBest, setEnduranceBest] = useState(saved.current?.enduranceBest||{round:0,clearTime:Infinity});
+  const [dailyTime, setDailyTime] = useState((!isNewDay && saved.current?.dailyTime) ? saved.current.dailyTime : null);
+
+  const builderFloorRef = useRef(0);
+  const builderActiveRef = useRef(true);
+  const timerRef = useRef(0);
+  const intervalRef = useRef(null);
+  const gsRef = useRef(GS.MENU);
+  const nextTargetRef = useRef(1);
+  const cellStatesRef = useRef(Array(9).fill("neutral"));
+  const roundRef = useRef(1);
+  const roundStartRef = useRef(0);
+  const modeRef = useRef(null);
+  const gridRef = useRef(grid);
+  const classicSolvesRef = useRef(isNewDay ? 0 : (saved.current?.classicSolvesToday||0));
+  const classicTotalSolvesRef = useRef(saved.current?.classicTotalSolves||0);
+  const classicTotalTimeRef = useRef(saved.current?.classicTotalTime||0);
+  const classicBestTimeRef = useRef(saved.current?.classicBestTime||Infinity);
+  const todayBadgesRef = useRef(todayBadges);
+  const touchHandled = useRef(false);
+
+  // Save to localStorage whenever key state changes
+  const persistState = useCallback(() => {
+    const allBadges = Object.values(todayBadgesRef.current).every(Boolean);
+    saveGame({
+      classicBestTime: classicBestTimeRef.current,
+      classicTotalTime: classicTotalTimeRef.current,
+      classicTotalSolves: classicTotalSolvesRef.current,
+      classicSolvesToday: classicSolvesRef.current,
+      enduranceBest: enduranceBest,
+      todayBadges: todayBadgesRef.current,
+      dailyStreak: dailyStreak,
+      dailyTime: dailyTime,
+      lastDate: getTodayStr(),
+      allBadgesYesterday: allBadges,
+      soundEnabled: soundEnabled,
+      musicEnabled: musicEnabled,
+      hapticEnabled: hapticEnabled,
+      theme: themeName,
+    });
+  }, [enduranceBest, dailyStreak, dailyTime, soundEnabled, musicEnabled, hapticEnabled, themeName]);
+
+  useEffect(() => { gsRef.current = gameState; }, [gameState]);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { gridRef.current = grid; }, [grid]);
+  useEffect(() => { todayBadgesRef.current = todayBadges; }, [todayBadges]);
+  useEffect(() => { AudioEngine.enabled = soundEnabled; }, [soundEnabled]);
+  const haptic = () => { if (hapticEnabled && navigator.vibrate) navigator.vibrate(8); };
+
+  // Splash screen — triangles, presents cycles twice, elegant fade out
+  useEffect(() => {
+    if (gameState !== GS.SPLASH) return;
+    setTimeout(() => setSplashOpacity(1), 50);
+    
+    const proceed = () => {
+      setSplashPhase(1);
+      // "presents..." appears at ~3.8s via CSS, two ellipsis cycles = ~6.3s
+      // Start fade out right after
+      setTimeout(() => { setSplashPhase(2); setSplashOpacity(0); }, 10000);
+      setTimeout(() => setGameState(GS.MENU), 10800);
+    };
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => setTimeout(proceed, 800));
+    } else {
+      setTimeout(proceed, 2000);
+    }
+    const fallback = setTimeout(() => { if (gsRef.current === GS.SPLASH) { setSplashOpacity(0); setTimeout(() => setGameState(GS.MENU), 500); } }, 16000);
+    return () => clearTimeout(fallback);
+  }, []);
+
+  useEffect(() => {
+    let frame, t = 0;
+    const animate = () => { t+=0.002; setBgRotation(t*18); setBgPulse(Math.sin(t*1.5)*0.5+0.5); frame=requestAnimationFrame(animate); };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const startTimerUp = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    timerRef.current=0; setTimer(0);
+    intervalRef.current = setInterval(() => {
+      if (gsRef.current!==GS.PLAYING) return;
+      timerRef.current+=0.1; setTimer(timerRef.current);
+    }, 100);
+  }, []);
+
+  const startTimerDown = useCallback((from) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    timerRef.current=from; setTimer(from);
+    intervalRef.current = setInterval(() => {
+      if (gsRef.current!==GS.PLAYING) return;
+      timerRef.current=Math.max(0,timerRef.current-0.1); setTimer(timerRef.current);
+      if (timerRef.current<=0) { clearInterval(intervalRef.current); setGameState(GS.GAME_OVER); }
+    }, 100);
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current=null; }
+  }, []);
+
+  useEffect(() => () => stopTimer(), [stopTimer]);
+
+  const getEnduranceTime = (r) => Math.max(1, 61-r);
+
+  const startCountdown = useCallback((roundNum, forcedGrid) => {
+    const g = forcedGrid || shuffleArray();
+    setGrid(g); gridRef.current = g;
+    setNextTarget(1); nextTargetRef.current = 1;
+    const litAll = Array(9).fill("countdown-lit");
+    setCellStates(litAll); cellStatesRef.current = litAll;
+    setGameState(GS.COUNTDOWN); setCountdownPhase(3);
+    setRound(roundNum); roundRef.current = roundNum;
+    builderFloorRef.current = 0; builderActiveRef.current = true;
+
+    setTimeout(() => { AudioEngine.playTone(0,"countdown"); setCountdownPhase(2);
+      const s=["neutral","neutral","neutral","countdown-lit","countdown-lit","countdown-lit","countdown-lit","countdown-lit","countdown-lit"];
+      setCellStates(s); cellStatesRef.current=s; }, 1000);
+    setTimeout(() => { AudioEngine.playTone(0,"countdown"); setCountdownPhase(1);
+      const s=["neutral","neutral","neutral","neutral","neutral","neutral","countdown-lit","countdown-lit","countdown-lit"];
+      setCellStates(s); cellStatesRef.current=s; }, 2000);
+    setTimeout(() => { AudioEngine.playTone(0,"countdown");
+      const s=Array(9).fill("neutral"); setCellStates(s); cellStatesRef.current=s;
+      setCountdownPhase(0); roundStartRef.current=Date.now();
+      if (modeRef.current===MODES.ENDURANCE) startTimerDown(getEnduranceTime(roundNum)); else startTimerUp();
+      setGameState(GS.PLAYING);
+    }, 3000);
+  }, [startTimerUp, startTimerDown]);
+
+  const startCountdownRef = useRef(startCountdown);
+  useEffect(() => { startCountdownRef.current = startCountdown; }, [startCountdown]);
+
+  const pendingGridRef = useRef(null);
+  const prepareRound = (roundNum, forcedGrid) => {
+    const g = forcedGrid || shuffleArray();
+    pendingGridRef.current = g;
+    setGrid(g); gridRef.current = g;
+    setRound(roundNum); roundRef.current = roundNum;
+    setNextTarget(1); nextTargetRef.current = 1;
+    const neutral = Array(9).fill("neutral");
+    setCellStates(neutral); cellStatesRef.current = neutral;
+    setGameState(GS.READY); setCountdownPhase(0);
+    builderFloorRef.current = 0; builderActiveRef.current = true;
+  };
+  const triggerCountdownFromReady = () => { if (gsRef.current!==GS.READY) return; startCountdown(roundRef.current, pendingGridRef.current); };
+
+  const startGame = (selectedMode) => {
+    AudioEngine.init(); setMode(selectedMode); modeRef.current=selectedMode;
+    setShowModeSelect(false); setStreakGlow(0); setLastClearTime(0); setWrongFlash(false);
+    if (selectedMode===MODES.CLASSIC) { prepareRound(1); }
+    else if (selectedMode===MODES.DAILY) {
+      if (dailyTime!==null) { setGameState(GS.DAILY_DONE); setShowModeSelect(false); return; }
+      prepareRound(1, shuffleArray(getDailySeed()));
+    }
+    else { startCountdown(1); }
+  };
+
+  const handleCellClick = (index, fromTouch) => {
+    if (!fromTouch && touchHandled.current) { touchHandled.current=false; return; }
+    if (fromTouch) touchHandled.current=true;
+    const gs=gsRef.current; if (gs!==GS.PLAYING) return;
+    if (cellStatesRef.current[index]==="correct") return;
+    AudioEngine.init(); haptic();
+    const value=gridRef.current[index], target=nextTargetRef.current, currentMode=modeRef.current;
+
+    if (value===target) {
+      AudioEngine.playTone(target-1,"correct");
+      const ns=[...cellStatesRef.current]; ns[index]="correct"; setCellStates(ns); cellStatesRef.current=ns;
+      if (target>builderFloorRef.current) builderFloorRef.current=target;
+      if (target===9) {
+        AudioEngine.playTone(0,"clear"); stopTimer();
+        const clearSec=(Date.now()-roundStartRef.current)/1000;
+        timerRef.current=clearSec; setTimer(clearSec);
+        setLastClearTime(clearSec); setStreakGlow(prev=>Math.min(1,prev+0.08));
+        if (currentMode===MODES.CLASSIC) {
+          const nSolves=classicSolvesRef.current+1; classicSolvesRef.current=nSolves; setClassicSolves(nSolves);
+          const nt=classicTotalSolvesRef.current+1, ntt=classicTotalTimeRef.current+clearSec;
+          classicTotalSolvesRef.current=nt; classicTotalTimeRef.current=ntt;
+          setClassicTotalSolves(nt); setClassicTotalTime(ntt);
+          if (clearSec<classicBestTimeRef.current) { classicBestTimeRef.current=clearSec; setClassicBestTime(clearSec); }
+          const nb={...todayBadgesRef.current};
+          if (nSolves>=10) nb.solver=true; if (clearSec<20) nb.quick=true;
+          if (builderActiveRef.current) nb.builder=true;
+          if (clearSec<=ntt/nt) nb.speedy=true;
+          todayBadgesRef.current=nb; setTodayBadges(nb);
+          setGameState(GS.ROUND_CLEAR); setTimeout(()=>prepareRound(1),1200);
+          setTimeout(()=>persistState(),100);
+        } else if (currentMode===MODES.DAILY) { setDailyTime(clearSec); setGameState(GS.DAILY_DONE); setTimeout(()=>persistState(),100); }
+        else if (currentMode===MODES.ENDURANCE) {
+          const r=roundRef.current;
+          setEnduranceBest(prev=>(r>prev.round||(r===prev.round&&clearSec<prev.clearTime))?{round:r,clearTime:clearSec}:prev);
+          setGameState(GS.ROUND_CLEAR); setTimeout(()=>startCountdownRef.current(r+1),1200);
+          setTimeout(()=>persistState(),100);
+        }
+      } else { nextTargetRef.current=target+1; setNextTarget(target+1); }
+    } else {
+      AudioEngine.playTone(0,"wrong"); setWrongFlash(true);
+      const reset=Array(9).fill("neutral"); setCellStates(reset); cellStatesRef.current=reset;
+      nextTargetRef.current=1; setNextTarget(1);
+      setTimeout(()=>setWrongFlash(false),400);
+    }
+  };
+
+  const handleShare = () => {
+    const nb={...todayBadges,bragger:true}; setTodayBadges(nb); todayBadgesRef.current=nb;
+    const allEarned = Object.values(nb).every(Boolean);
+    let currentStreak = dailyStreak;
+    if (allEarned && currentStreak < 1) { currentStreak = 1; setDailyStreak(1); }
+    const earned=BADGE_DEFS.filter(b=>nb[b.id]);
+    const d=new Date();
+    const dateStr=(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear();
+    const text=["🟩 9SQUARE - "+dateStr,
+      "🔥 Daily Streak: "+currentStreak,
+      "Badges earned: "+earned.map(b=>b.icon).join(" ")+" ("+earned.length+"/5)",
+      classicBestTime<Infinity?"⚡ Best: "+classicBestTime.toFixed(2)+"s":"",
+      enduranceBest.round>0?"🏔 Endurance: Round "+enduranceBest.round:"",
+      "Can you beat me?",
+      "Play Now »"
+    ].filter(Boolean).join("\n");
+    
+    if (navigator.share) {
+      navigator.share({title:"9SQUARE",text:text}).catch(()=>{});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    setShowShareCard(true); setTimeout(()=>setShowShareCard(false),2500);
+    setTimeout(()=>persistState(),100);
+  };
+
+  const cc=cellStatesRef.current.filter(s=>s==="correct").length;
+  const TH=THEMES[themeName]||THEMES.green;
+  const maxTime=mode===MODES.ENDURANCE?getEnduranceTime(round):99;
+  const dimLevel=mode===MODES.ENDURANCE?Math.max(0.05,Math.min(1,timer/maxTime)):1;
+  const getTimerColor=()=>{
+    if(wrongFlash)return"#ff2244";
+    if(mode===MODES.ENDURANCE&&timer<maxTime*0.25)return TH.danger;
+    const c=cellStatesRef.current.filter(s=>s==="correct").length;
+    if(c>0){const p=TH.correctA.split(",").map(Number);return"rgb("+(p[0]-30+c*7)+","+(p[1]-30+c*7)+","+(p[2]-20+c*7)+")";}
+    return TH.textDim;
+  };
+  const timerColor=getTimerColor();
+  const bgI=wrongFlash?0.7:(0.1+streakGlow*0.35+cc*0.025);
+  const bgH=wrongFlash?0:(TH.hue+streakGlow*25+cc*3);
+
+  const getCellStyle=(index)=>{
+    const state=cellStatesRef.current[index];
+    const c=cellStatesRef.current.filter(s=>s==="correct").length;
+    const base={width:"100%",aspectRatio:"1",border:"none",outline:"none",
+      cursor:gameState===GS.PLAYING?"pointer":"default",
+      borderRadius:"3px",position:"relative",
+      WebkitTapHighlightColor:"transparent",userSelect:"none",padding:0,touchAction:"manipulation"};
+    if(state==="countdown-lit")return{...base,
+      background:TH.countdownCell||"linear-gradient(145deg,#222e3c,#1a2430)",
+      boxShadow:"0 0 18px rgba("+TH.borderGlow+","+(TH.isLight?0.15:0.2)+"),inset 0 1px 2px rgba("+(TH.isLight?"0,0,0,0.06":"255,255,255,0.04")+")"};
+    if(state==="correct"){const i=c/9,gs2=10+i*35,ga=0.35+i*0.5;
+      const rc=TH.rainbowCells&&TH.rainbowCells[gridRef.current[index]-1];
+      const cA=rc?rc.a:TH.correctA, cB=rc?rc.b:TH.correctB, cG=rc?rc.glow:TH.glow;
+      return{...base,background:"radial-gradient(circle at 50% 42%,rgba("+cA+",1),rgba("+cB+",1))",
+        boxShadow:"0 0 "+gs2+"px rgba("+cG+","+ga+"),0 0 "+(gs2*2.8)+"px rgba("+cG+","+(ga*0.25)+"),inset 0 0 14px rgba("+cG+","+(i*0.3)+")",
+        transform:"scale(0.94)"};}
+    if(state==="fading")return{...base,background:TH.fadingCell||"#0a0e14",boxShadow:"0 0 10px rgba("+TH.glow+",0.08)",opacity:0.35};
+    const b=mode===MODES.ENDURANCE?(0.12+dimLevel*0.22):0.3;
+    if(TH.neutralCell)return{...base,background:TH.neutralCell,
+      boxShadow:"inset 0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)"};
+    return{...base,background:"linear-gradient(145deg,rgba("+Math.floor(28*b*3)+","+Math.floor(34*b*3)+","+Math.floor(44*b*3)+",1),rgba("+Math.floor(20*b*3)+","+Math.floor(26*b*3)+","+Math.floor(34*b*3)+",1))",
+      boxShadow:"inset 0 1px 3px rgba(0,0,0,0.5),0 1px 1px rgba(255,255,255,"+(0.015*b)+")"};
+  };
+
+  const isPlaying=[GS.PLAYING,GS.COUNTDOWN,GS.ROUND_CLEAR,GS.READY].includes(gameState);
+  const earnedCount=Object.values(todayBadges).filter(Boolean).length;
+
+  // ─── RENDER ────────────────────────────────────────────────────
+  return e("div",{style:{position:"fixed",inset:0,overflow:"hidden",background:TH.bg,
+    fontFamily:F_BODY,color:"#c0d0c8",display:"flex",flexDirection:"column",alignItems:"center",touchAction:"manipulation"}},
+
+    // BG
+    e("div",{style:{position:"absolute",inset:0,pointerEvents:"none",overflow:"hidden"}},
+
+      // Unicorn mode: magical pastel shapes
+      TH.isUnicorn?e(React.Fragment,null,
+        // Large star - pink
+        e("div",{className:"uni-star",style:{position:"absolute",width:"200px",height:"200px",top:"5%",left:"15%",
+          transform:"rotate("+(bgRotation*0.8)+"deg)",background:"rgba(230,160,190,0.12)",transition:"background 0.6s"}}),
+        // Medium heart - teal
+        e("div",{className:"uni-heart",style:{position:"absolute",width:"140px",height:"140px",top:"10%",right:"10%",
+          transform:"rotate("+(bgRotation*-0.6)+"deg)",background:"rgba(140,210,210,0.1)",transition:"background 0.6s"}}),
+        // Small diamond - light blue
+        e("div",{className:"uni-diamond",style:{position:"absolute",width:"100px",height:"100px",top:"35%",left:"8%",
+          transform:"rotate("+(bgRotation*1.2)+"deg)",background:"rgba(160,180,240,0.1)",transition:"background 0.6s"}}),
+        // Large star outline - purple
+        e("div",{className:"uni-star",style:{position:"absolute",width:"300px",height:"300px",top:"15%",left:"50%",
+          transform:"translate(-50%,0) rotate("+(bgRotation*-0.4)+"deg)",
+          border:"1.5px solid rgba(200,160,230,0.12)",background:"transparent"}}),
+        // Small star - pink
+        e("div",{className:"uni-star",style:{position:"absolute",width:"80px",height:"80px",top:"55%",right:"15%",
+          transform:"rotate("+(bgRotation*1.5)+"deg)",background:"rgba(240,170,200,0.1)"}}),
+        // Circle - teal
+        e("div",{style:{position:"absolute",width:"180px",height:"180px",top:"40%",left:"60%",
+          transform:"rotate("+(bgRotation*0.5)+"deg)",
+          border:"1px solid rgba(140,220,210,0.1)",borderRadius:"50%"}}),
+        // Diamond outline - pink
+        e("div",{className:"uni-diamond",style:{position:"absolute",width:"160px",height:"160px",top:"60%",left:"5%",
+          transform:"rotate("+(bgRotation*-0.7)+"deg)",
+          border:"1px solid rgba(230,150,180,0.1)",background:"transparent"}}),
+        // Tiny star - light blue
+        e("div",{className:"uni-star",style:{position:"absolute",width:"60px",height:"60px",top:"70%",right:"25%",
+          transform:"rotate("+(bgRotation*2)+"deg)",background:"rgba(160,190,240,0.1)"}}),
+        // Heart outline - purple
+        e("div",{className:"uni-heart",style:{position:"absolute",width:"120px",height:"120px",top:"75%",left:"30%",
+          transform:"rotate("+(bgRotation*-1)+"deg)",
+          border:"1px solid rgba(200,150,220,0.08)",background:"transparent"}}),
+        // Central glow - soft pink/purple
+        e("div",{style:{position:"absolute",inset:0,
+          background:"radial-gradient(ellipse at 50% 78%,rgba(200,160,230,"+(0.06+bgPulse*0.04)+") 0%,transparent 55%)",
+          transition:"background 0.6s"}})
+      ):
+
+      // Normal modes: geometric shapes
+      e(React.Fragment,null,
+        e("div",{style:{position:"absolute",width:"420px",height:"420px",top:"12%",left:"50%",
+          transform:"translate(-50%,-20%) rotate("+bgRotation+"deg)",
+          border:"1.5px solid "+(TH.bgColors?"rgba(224,96,96,"+(bgI*0.3)+")":"hsla("+bgH+",55%,45%,"+(bgI*0.22)+")"),transition:"border-color 0.6s"}}),
+        e("div",{style:{position:"absolute",width:"300px",height:"300px",top:"18%",left:"50%",
+          transform:"translate(-50%,-10%) rotate("+(-bgRotation*1.4)+"deg)",
+          border:"1px solid "+(TH.bgColors?"rgba(224,192,64,"+(bgI*0.25)+")":"hsla("+(bgH+35)+",45%,40%,"+(bgI*0.16)+")"),borderRadius:"50%",transition:"border-color 0.6s"}}),
+        e("div",{style:{position:"absolute",width:"550px",height:"550px",top:"8%",left:"50%",
+          transform:"translate(-50%,-22%) rotate("+(45+bgRotation*0.6)+"deg)",
+          border:"1px solid "+(TH.bgColors?"rgba(64,192,128,"+(bgI*0.18)+")":"hsla("+(bgH-25)+",35%,35%,"+(bgI*0.1)+")"),transition:"border-color 0.6s"}}),
+        e("div",{style:{position:"absolute",width:"180px",height:"180px",top:"25%",left:"50%",
+          transform:"translate(-50%,0%) rotate("+(bgRotation*2)+"deg)",
+          border:"1px solid "+(TH.bgColors?"rgba(96,128,224,"+(bgI*0.2)+")":"hsla("+(bgH+60)+",50%,50%,"+(bgI*0.12)+")"),
+          borderRadius:"30% 70% 70% 30% / 30% 30% 70% 70%",transition:"border-color 0.6s"}}),
+        e("div",{style:{position:"absolute",inset:0,
+          background:"radial-gradient(ellipse at 50% 78%,hsla("+bgH+",45%,"+(10+bgPulse*6)+"%,"+(bgI*0.55)+") 0%,transparent 55%)",
+          transition:"background 0.6s"}})
+      ),
+
+      // Wrong flash overlay
+      wrongFlash&&e("div",{style:{position:"absolute",inset:0,
+        background:TH.isUnicorn
+          ?"radial-gradient(ellipse at 50% 78%,rgba(230,120,160,0.4) 0%,transparent 55%)"
+          :"radial-gradient(ellipse at 50% 78%,rgba(140,10,10,0.55) 0%,transparent 55%)",
+        animation:"flashFade 0.4s ease forwards"}})
+    ),
+
+    // SPLASH SCREEN
+    gameState===GS.SPLASH&&e("div",{
+      style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:"20px",zIndex:100,background:"#060810",
+      opacity:splashOpacity,transition:"opacity 0.8s ease"}},
+      // Logo — no glow, pulse starts after all 4 triangles appear (2.4s)
+      e("div",{style:{position:"relative",animation:"logoPulse 3s ease-in-out 2.8s infinite"}},
+        e(XonsultLogo,{size:130,animated:true})
+      ),
+      // Studio name — fades in after triangles
+      e("div",{style:{animation:"presentsIn 1s ease 2.6s both",textAlign:"center"}},
+        e("div",{style:{fontSize:"28px",fontFamily:F_DISPLAY,color:"#d4eee0",letterSpacing:"6px",
+          textShadow:"0 0 25px rgba(80,210,120,0.2)"}},
+          "X-ON X-OFF"),
+        e("div",{style:{fontSize:"16px",fontFamily:F_BODY,fontWeight:600,color:"#3a6a50",letterSpacing:"8px",marginTop:"8px"}},
+          "STUDIO")
+      ),
+      // "presents..." or "READY!!!"
+      e("div",{style:{animation:splashReady?"readyPop 0.4s ease both":"presentsIn 1s ease 3.8s both",
+        display:"flex",alignItems:"baseline",gap:"2px"}},
+        e("span",{style:{fontSize:"36px",fontFamily:"'Caveat', cursive",fontWeight:600,color:"#4a8a65",
+          fontStyle:"italic",letterSpacing:"2px"}},"presents"),
+        e(AnimatedDots)
+      )
+    ),
+
+    // MENU
+    gameState===GS.MENU&&!showModeSelect&&e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:"20px",zIndex:10}},
+      e("div",{style:{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}},
+        e("div",{style:{position:"absolute",width:"300px",height:"300px",borderRadius:"50%",
+          background:"radial-gradient(circle,rgba("+TH.glow+",0.25) 0%,transparent 60%)",
+          animation:"titleGlowBurst 0.8s ease 0.3s both",pointerEvents:"none"}}),
+        e("div",{style:{fontSize:"clamp(56px,15vw,100px)",fontFamily:F_DISPLAY,letterSpacing:"4px",
+          color:TH.isUnicorn?"#8ab8e0":TH.text,lineHeight:0.95,
+          textShadow:TH.isUnicorn
+            ?"0 0 50px rgba(200,140,230,0.3),0 0 100px rgba(200,140,230,0.15),0 4px 0 rgba(220,130,170,0.4)"
+            :"0 0 50px rgba("+TH.glow+",0.25),0 0 100px rgba("+TH.glow+",0.1),0 4px 0 rgba(0,0,0,0.3)",
+          WebkitTextStroke:TH.isUnicorn?"1px rgba(140,180,220,0.3)":"1px rgba("+TH.glow+",0.15)",
+          animation:"titleZoomPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both"}},"9SQUARE")
+      ),
+      e("div",{style:{animation:"staggerIn1 0.5s ease 0.5s both",fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.textDim,letterSpacing:"5px",marginTop:"-8px"}},"SKILL + LUCK + SPEED"),
+      e("div",{style:{animation:"staggerIn2 0.6s ease 0.5s both",marginTop:"32px",display:"flex",gap:"12px"}},
+        e("button",{onClick:()=>{ setShowTutorial(true); setTutorialPage(0); },style:{padding:"20px 28px",fontSize:"18px",fontFamily:F_DISPLAY,
+          background:TH.btnBg,color:TH.primary,border:"1px solid "+TH.btnBorder,
+          borderRadius:"6px",cursor:"pointer",letterSpacing:"3px",textTransform:"uppercase",
+          boxShadow:"0 0 28px rgba("+TH.borderGlow+",0.1),inset 0 1px 0 rgba(255,255,255,0.03)"}},"TUTORIAL"),
+        e("button",{onClick:()=>setShowModeSelect(true),style:{padding:"20px 44px",fontSize:"28px",fontFamily:F_DISPLAY,
+          background:TH.primary,color:TH.bg,border:"none",
+          borderRadius:"6px",cursor:"pointer",letterSpacing:"5px",textTransform:"uppercase",
+          boxShadow:"0 0 28px "+TH.primary+"33,0 4px 12px rgba(0,0,0,0.3)"}},"PLAY")
+      ),
+      e("button",{onClick:()=>setShowBadges(!showBadges),style:{animation:"staggerIn3 0.7s ease 0.5s both",marginTop:"6px",background:"none",
+        border:"1px solid rgba("+TH.borderGlow+",0.06)",borderRadius:"6px",padding:"10px 24px",color:TH.textDim,
+        fontSize:"18px",fontFamily:F_BODY,fontWeight:600,cursor:"pointer",letterSpacing:"2px"}},
+        "BADGES "+earnedCount+"/5"+(dailyStreak>0?" · 🔥 "+dailyStreak:"")),
+      showBadges&&e("div",{style:{background:TH.surface,border:"1px solid rgba("+TH.borderGlow+",0.14)",
+        borderRadius:"8px",padding:"16px 20px",maxWidth:"320px",width:"88vw"}},
+        BADGE_DEFS.map(b=>e("div",{key:b.id,style:{display:"flex",alignItems:"center",gap:"12px",padding:"8px 0",
+          opacity:todayBadges[b.id]?1:0.3}},
+          e("span",{style:{fontSize:"28px",width:"32px",textAlign:"center"}},b.icon),
+          e("div",null,
+            e("div",{style:{fontSize:"18px",fontFamily:F_DISPLAY,color:todayBadges[b.id]?TH.accent:TH.textDim}},b.name),
+            e("div",{style:{fontSize:"14px",fontFamily:F_BODY,color:TH.textDimmer}},b.desc)))),
+        e("button",{onClick:handleShare,style:{marginTop:"14px",width:"100%",padding:"12px",fontSize:"18px",
+          fontFamily:F_DISPLAY,background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
+          borderRadius:"4px",color:TH.primary,cursor:"pointer",letterSpacing:"2px"}},"SHARE → CLIPBOARD")),
+      showShareCard&&e("div",{style:{position:"fixed",top:"24px",left:"50%",transform:"translateX(-50%)",
+        background:TH.surface,border:"1px solid rgba("+TH.borderGlow+",0.3)",borderRadius:"8px",
+        padding:"12px 28px",fontSize:"20px",fontFamily:F_BODY,fontWeight:600,color:TH.accent,
+        zIndex:200,boxShadow:"0 0 30px rgba("+TH.borderGlow+",0.15)",animation:"fadeUp 2.5s ease forwards"}},"Copied to clipboard!"),
+      e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer,marginTop:"8px",textAlign:"center",lineHeight:1.8}},
+        classicBestTime<Infinity&&e("div",null,"CLASSIC BEST: "+classicBestTime.toFixed(2)+"s"),
+        enduranceBest.round>0&&e("div",null,"ENDURANCE BEST: Round "+enduranceBest.round))
+    ),
+
+    // TUTORIAL OVERLAY
+    showTutorial&&e("div",{
+      onTouchStart:(ev)=>{tutorialTouchStart.current=ev.touches[0].clientX;},
+      onTouchEnd:(ev)=>{
+        if(tutorialTouchStart.current===null)return;
+        const dx=ev.changedTouches[0].clientX-tutorialTouchStart.current;
+        tutorialTouchStart.current=null;
+        if(dx<-40){if(tutorialPage<3)setTutorialPage(tutorialPage+1);else setShowTutorial(false);}
+        if(dx>40&&tutorialPage>0)setTutorialPage(tutorialPage-1);
+      },
+      onClick:()=>{if(tutorialPage<3)setTutorialPage(tutorialPage+1);else setShowTutorial(false);},
+      style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+        alignItems:"center",justifyContent:"center",zIndex:200,
+        background:TH.isLight?"rgba(244,240,248,0.97)":"rgba(6,8,16,0.97)",
+        cursor:"pointer",touchAction:"pan-y"}},
+
+      // Slide 1
+      tutorialPage===0&&e("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"24px",padding:"20px"}},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"4px",width:"180px"}},
+          [0,1,2,3,4,5,6,7,8].map(pos=>{
+            const lit=pos===0?1:pos===5?2:pos===7?3:0;
+            return e("div",{key:pos,style:{width:"100%",aspectRatio:"1",borderRadius:"4px",display:"flex",
+              alignItems:"center",justifyContent:"center",fontSize:"24px",fontFamily:F_DISPLAY,
+              background:lit?"radial-gradient(circle at 50% 42%,rgba("+TH.correctA+",1),rgba("+TH.correctB+",1))":(TH.neutralCell||"linear-gradient(145deg,#1a2430,#141c28)"),
+              color:lit?(TH.isLight?TH.bg:"#fff"):"transparent",
+              boxShadow:lit?"0 0 15px rgba("+TH.glow+",0.4)":(TH.isLight?"inset 0 1px 3px rgba(0,0,0,0.06)":"inset 0 1px 3px rgba(0,0,0,0.4)")}},lit||"");
+          })
+        ),
+        e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.text,textAlign:"center",letterSpacing:"2px",lineHeight:1.4}},
+          "Tap the squares in order"),
+        e("div",{style:{fontSize:"20px",fontFamily:F_BODY,fontWeight:600,color:TH.textMid,textAlign:"center"}},
+          "1 through 9")
+      ),
+
+      // Slide 2
+      tutorialPage===1&&e("div",{key:"tut1",style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"24px",padding:"20px"}},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"4px",width:"180px"}},
+          [0,1,2,3,4,5,6,7,8].map(pos=>{
+            const lit=pos===0?1:pos===5?2:pos===7?3:0;
+            const isRed=pos===4;
+            return e("div",{key:pos,style:{width:"100%",aspectRatio:"1",borderRadius:"4px",display:"flex",
+              alignItems:"center",justifyContent:"center",fontSize:"24px",fontFamily:F_DISPLAY,
+              background:isRed?"radial-gradient(circle at 50% 42%,rgba(220,50,60,1),rgba(140,30,40,1))":
+                lit?"radial-gradient(circle at 50% 42%,rgba("+TH.correctA+",1),rgba("+TH.correctB+",1))":
+                (TH.neutralCell||"linear-gradient(145deg,#1a2430,#141c28)"),
+              color:(lit||isRed)?(TH.isLight?TH.bg:"#fff"):"transparent",
+              boxShadow:isRed?"0 0 15px rgba(255,60,80,0.4)":lit?"0 0 15px rgba("+TH.glow+",0.4)":(TH.isLight?"inset 0 1px 3px rgba(0,0,0,0.06)":"inset 0 1px 3px rgba(0,0,0,0.4)"),
+              animation:isRed?"tutRedFlash 2s ease infinite":lit?"tutResetLoop 2s ease 1s infinite":""}},
+              isRed?"✕":lit||"");
+          })
+        ),
+        e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.text,textAlign:"center",letterSpacing:"2px",lineHeight:1.4}},
+          "Tap the wrong sequence?"),
+        e("div",{style:{fontSize:"20px",fontFamily:F_BODY,fontWeight:600,color:TH.danger,textAlign:"center"}},
+          "Start back at square 1!")
+      ),
+
+      // Slide 3
+      tutorialPage===2&&e("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"28px",padding:"20px"}},
+        e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.text,textAlign:"center",letterSpacing:"3px",marginBottom:"8px"}},
+          "Three distinct modes"),
+        e("div",{style:{display:"flex",flexDirection:"column",gap:"16px",maxWidth:"300px",width:"85vw"}},
+          [{label:"CLASSIC",desc:"Compete against yourself. Earn badges. Build a streak.",color:TH.primary},
+           {label:"DAILY",desc:"Compete daily against friends.",color:TH.primaryBright},
+           {label:"ENDURANCE",desc:"Compete against the world! Climb your rank.",color:TH.accent}].map(m=>
+            e("div",{key:m.label,style:{textAlign:"left"}},
+              e("div",{style:{fontSize:"22px",fontFamily:F_DISPLAY,color:m.color,letterSpacing:"2px"}},m.label),
+              e("div",{style:{fontSize:"16px",fontFamily:F_BODY,fontWeight:600,color:TH.textMid,marginTop:"2px"}},m.desc)))
+        )
+      ),
+
+      // Slide 4
+      tutorialPage===3&&e("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"28px",padding:"20px"}},
+        e("div",{style:{fontSize:"clamp(48px,14vw,72px)",fontFamily:F_DISPLAY,color:TH.primary,letterSpacing:"4px",
+          textShadow:"0 0 30px rgba("+TH.glow+",0.3)",animation:"titleZoomPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both"}},
+          "READY!!!"),
+        e("button",{onClick:(ev)=>{ev.stopPropagation();setShowTutorial(false);setShowModeSelect(true);},
+          style:{padding:"18px 48px",fontSize:"28px",fontFamily:F_DISPLAY,
+            background:TH.primary,color:TH.bg,border:"none",
+            borderRadius:"6px",cursor:"pointer",letterSpacing:"5px",textTransform:"uppercase",
+            boxShadow:"0 0 28px "+TH.primary+"33,0 4px 12px rgba(0,0,0,0.3)"}},"PLAY")
+      ),
+
+      // Progress dots
+      e("div",{style:{position:"absolute",bottom:"40px",display:"flex",gap:"10px"}},
+        [0,1,2,3].map(i=>e("div",{key:i,style:{width:"10px",height:"10px",borderRadius:"50%",
+          background:i===tutorialPage?TH.primary:(TH.isLight?"rgba(0,0,0,0.12)":"rgba(255,255,255,0.15)"),
+          transition:"background 0.3s"}}))
+      )
+    ),
+
+
+    // MODE SELECT
+    gameState===GS.MENU&&showModeSelect&&e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:"14px",zIndex:10}},
+      e("div",{style:{fontSize:"clamp(36px,10vw,56px)",fontFamily:F_DISPLAY,letterSpacing:"4px",
+        color:TH.isUnicorn?"#8ab8e0":TH.text,
+        textShadow:TH.isUnicorn
+          ?"0 0 30px rgba(200,140,230,0.2),0 0 60px rgba(200,140,230,0.08),0 3px 0 rgba(220,130,170,0.35)"
+          :"0 0 30px rgba("+TH.glow+",0.15),0 0 60px rgba("+TH.glow+",0.06),0 3px 0 rgba(0,0,0,0.25)",
+        marginBottom:"6px"}},"9SQUARE"),
+      e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:700,color:TH.textDim,letterSpacing:"5px",marginBottom:"18px"}},"SELECT MODE"),
+      [{m:MODES.CLASSIC,label:"CLASSIC",desc:"Compete against yourself. Earn badges. Build a streak.",
+        stat:classicBestTime<Infinity?"Best: "+classicBestTime.toFixed(2)+"s":null},
+       {m:MODES.DAILY,label:"DAILY",desc:"One daily puzzle. Compete against friends.",
+        stat:dailyTime!==null?"Today: "+dailyTime.toFixed(2)+"s":null},
+       {m:MODES.ENDURANCE,label:"ENDURANCE",desc:"60, 59, 58... Rank against the world!",
+        stat:enduranceBest.round>0?"Best: Round "+enduranceBest.round:null}].map(({m,label,desc,stat})=>
+        e("button",{key:m,onClick:()=>startGame(m),style:{width:"min(85vw,300px)",padding:"20px 24px",textAlign:"left",
+          fontFamily:F_BODY,background:TH.surface,border:"1px solid rgba("+TH.borderGlow+",0.12)",
+          borderRadius:"8px",cursor:"pointer",boxShadow:"0 0 12px rgba("+TH.borderGlow+",0.04)"}},
+          e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline"}},
+            e("div",{style:{fontSize:"28px",fontFamily:F_DISPLAY,color:TH.accent,letterSpacing:"3px"}},label),
+            stat&&e("div",{style:{fontSize:"14px",fontFamily:F_BODY,fontWeight:600,color:TH.textDim}},stat)),
+          e("div",{style:{fontSize:"16px",fontFamily:F_BODY,color:TH.textDimmer,marginTop:"5px"}},desc))),
+      e("button",{onClick:()=>setShowModeSelect(false),style:{marginTop:"14px",background:"none",border:"none",
+        color:TH.textDimmer,fontFamily:F_BODY,fontSize:"18px",fontWeight:600,cursor:"pointer",letterSpacing:"2px"}},"← BACK"),
+      e("div",{style:{marginTop:"20px",display:"flex",gap:"10px",alignItems:"center",justifyContent:"center"}},
+        e("span",{style:{fontSize:"14px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer}},"Support the dev:"),
+        e("a",{href:VENMO_URL,target:"_blank",rel:"noopener",onClick:(ev)=>ev.stopPropagation(),
+          style:{padding:"6px 14px",fontSize:"14px",fontFamily:F_DISPLAY,
+            background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
+            borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"Venmo"),
+        e("a",{href:PAYPAL_URL,target:"_blank",rel:"noopener",onClick:(ev)=>ev.stopPropagation(),
+          style:{padding:"6px 14px",fontSize:"14px",fontFamily:F_DISPLAY,
+            background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
+            borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"PayPal")
+      )
+    ),
+
+    // GAME OVER
+    gameState===GS.GAME_OVER&&e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:"14px",background:TH.overlayBg,zIndex:50}},
+      // Big round number as the hero
+      e("div",{style:{fontSize:"clamp(80px,22vw,120px)",fontFamily:F_DISPLAY,color:TH.primary,
+        textShadow:"0 0 40px rgba("+TH.glow+",0.3)",letterSpacing:"4px",lineHeight:1,
+        animation:"titleZoomPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both"}},round>1?(round-1):"0"),
+      e("div",{style:{fontSize:"20px",fontFamily:F_BODY,fontWeight:700,color:TH.textMid,letterSpacing:"3px",marginTop:"-4px"}},
+        round>2?"ROUNDS CLEARED":"ROUND CLEARED"),
+      // Last clear time
+      lastClearTime>0&&e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.textDim,marginTop:"8px"}},
+        "Last clear: "+lastClearTime.toFixed(2)+"s"),
+      // Personal best
+      enduranceBest.round>0&&e("div",{style:{fontSize:"16px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer,marginTop:"4px"}},
+        "Personal Best: Round "+enduranceBest.round+" · "+enduranceBest.clearTime.toFixed(2)+"s"),
+      // Buttons
+      e("div",{style:{display:"flex",gap:"12px",marginTop:"22px"}},
+        e("button",{onClick:()=>startGame(MODES.ENDURANCE),style:{padding:"16px 34px",fontSize:"24px",fontFamily:F_DISPLAY,
+          background:TH.btnBg,color:TH.primary,
+          border:"1px solid "+TH.btnBorder,borderRadius:"6px",cursor:"pointer",letterSpacing:"3px"}},"RETRY"),
+        e("button",{onClick:()=>{setGameState(GS.MENU);setShowModeSelect(true);},style:{padding:"16px 26px",fontSize:"24px",
+          fontFamily:F_DISPLAY,background:"rgba(255,255,255,0.03)",color:TH.textDim,
+          border:"1px solid rgba(255,255,255,0.06)",borderRadius:"6px",cursor:"pointer",letterSpacing:"2px"}},"MENU"))
+    ),
+
+    // DAILY DONE
+    gameState===GS.DAILY_DONE&&e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:"14px",background:TH.overlayBg,zIndex:50}},
+      e("div",{style:{fontSize:"clamp(40px,12vw,64px)",fontFamily:F_DISPLAY,color:TH.accent,
+        textShadow:"0 0 40px rgba("+TH.glow+",0.25)",letterSpacing:"4px"}},"DAILY SOLVED"),
+      e("div",{style:{fontSize:"80px",fontFamily:F_DISPLAY,color:TH.primaryBright,
+        textShadow:"0 0 30px rgba("+TH.glow+",0.25)"}},dailyTime?dailyTime.toFixed(2)+"s":""),
+      e("div",{style:{fontSize:"20px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer,letterSpacing:"2px"}},"Come back tomorrow :)"),
+      e("button",{onClick:()=>{setGameState(GS.MENU);setShowModeSelect(true);},style:{marginTop:"22px",padding:"16px 34px",
+        fontSize:"24px",fontFamily:F_DISPLAY,background:"rgba(255,255,255,0.03)",color:TH.primary,
+        border:"1px solid rgba("+TH.borderGlow+",0.18)",borderRadius:"6px",cursor:"pointer",letterSpacing:"3px"}},"MENU")
+    ),
+
+    // HUD
+    isPlaying&&e("div",{style:{width:"100%",maxWidth:"400px",paddingTop:"max(24px,env(safe-area-inset-top,24px))",
+      display:"flex",flexDirection:"column",alignItems:"center",zIndex:10}},
+      e("div",{style:{fontSize:"14px",fontFamily:F_BODY,fontWeight:700,color:TH.textDimmer,letterSpacing:"4px",
+        textTransform:"uppercase",marginBottom:"10px"}},mode),
+      e("div",{style:{textAlign:"center",marginBottom:"8px"}},
+        e("div",{style:{fontSize:"12px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer,letterSpacing:"2px",marginBottom:"2px"}},
+          mode===MODES.ENDURANCE?"TIME":"TIMER"),
+        e("div",{style:{fontSize:"clamp(60px,16vw,86px)",fontFamily:F_DISPLAY,color:timerColor,
+          textShadow:"0 0 18px "+timerColor+"35,0 0 45px "+timerColor+"12",letterSpacing:"4px",lineHeight:1,
+          fontVariantNumeric:"tabular-nums"}},
+          gameState===GS.COUNTDOWN?"--":mode===MODES.ENDURANCE?formatTimer(timer):formatTimeSec(timer))),
+      e("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"center",width:"100%",gap:"40px"}},
+        e("div",{style:{textAlign:"center"}},
+          e("div",{style:{fontSize:"12px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer,letterSpacing:"2px",marginBottom:"2px"}},
+            mode===MODES.ENDURANCE?"ROUND":"SOLVES"),
+          e("div",{style:{fontSize:"32px",fontFamily:F_DISPLAY,color:timerColor,textShadow:"0 0 10px "+timerColor+"25",
+            fontVariantNumeric:"tabular-nums"}},mode===MODES.ENDURANCE?round:classicSolves)),
+        e("div",{style:{textAlign:"center"}},
+          e("div",{style:{fontSize:"12px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer,letterSpacing:"2px",marginBottom:"2px"}},"BEST"),
+          e("div",{style:{fontSize:"32px",fontFamily:F_DISPLAY,fontVariantNumeric:"tabular-nums",
+            color:mode===MODES.ENDURANCE?(enduranceBest.round>0?TH.textDim:TH.accentDim):(classicBestTime<Infinity?TH.textDim:TH.accentDim)}},
+            mode===MODES.ENDURANCE?(enduranceBest.round>0?enduranceBest.round:"--"):(classicBestTime<Infinity?formatTimeSec(classicBestTime):"--"))))
+    ),
+
+    // BADGE ICONS (Classic mode) or SPACER
+    isPlaying&&mode===MODES.CLASSIC&&e("div",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",minHeight:"60px"}},
+      e("div",{onClick:(ev)=>{ev.stopPropagation();setShowBadgeOverlay(true);},
+        style:{display:"flex",gap:"16px",cursor:"pointer",padding:"8px 16px",borderRadius:"8px",
+          background:TH.isUnicorn?"rgba(138,184,224,0.8)":"rgba(255,255,255,0.02)",
+          border:TH.isUnicorn?"1px solid rgba(160,200,235,0.5)":"1px solid rgba(255,255,255,0.04)",
+          boxShadow:TH.isUnicorn?"0 3px 10px rgba(220,130,170,0.35)":"none"}},
+        BADGE_DEFS.map(b=>e("div",{key:b.id,style:{fontSize:"24px",
+          opacity:todayBadges[b.id]?1:(TH.isUnicorn?1:0.2),
+          color:TH.isUnicorn?(todayBadges[b.id]?undefined:"#ffffff"):undefined,
+          filter:todayBadges[b.id]?"drop-shadow(0 0 6px rgba("+TH.glow+",0.5))":(TH.isUnicorn?"brightness(0) invert(1)":"none"),
+          transition:"opacity 0.3s, filter 0.3s"}},b.icon))
+      )
+    ),
+    isPlaying&&mode!==MODES.CLASSIC&&e("div",{style:{flex:1,minHeight:"60px"}}),
+
+    // BADGE OVERLAY
+    showBadgeOverlay&&e("div",{onClick:()=>setShowBadgeOverlay(false),
+      style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+        alignItems:"center",justifyContent:"center",zIndex:200,background:TH.overlayBg,cursor:"pointer"}},
+      e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.text,letterSpacing:"3px",marginBottom:"20px"}},"BADGES"),
+      e("div",{style:{display:"flex",flexDirection:"column",gap:"14px",maxWidth:"320px",width:"88vw"}},
+        BADGE_DEFS.map(b=>e("div",{key:b.id,style:{display:"flex",alignItems:"center",gap:"12px",padding:"8px 0",
+          opacity:todayBadges[b.id]?1:0.35}},
+          e("span",{style:{fontSize:"28px",width:"32px",textAlign:"center",
+            filter:todayBadges[b.id]?"drop-shadow(0 0 6px rgba("+TH.glow+",0.5))":"none"}},b.icon),
+          e("div",null,
+            e("div",{style:{fontSize:"18px",fontFamily:F_DISPLAY,color:todayBadges[b.id]?TH.accent:TH.textDim}},b.name),
+            e("div",{style:{fontSize:"14px",fontFamily:F_BODY,color:TH.textMid}},b.desc))
+        ))
+      ),
+      e("div",{style:{marginTop:"20px",fontSize:"14px",fontFamily:F_BODY,color:TH.textDim}},"Tap anywhere to close")
+    ),
+
+    // GRID
+    isPlaying&&e("div",{style:{position:"relative",width:"min(80vw,290px)",
+      marginBottom:"max(36px,env(safe-area-inset-bottom,36px))",zIndex:10}},
+      e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"3px",width:"100%",padding:"5px",
+        background:wrongFlash?(TH.wrongGridBg||"rgba(30,6,8,0.85)"):(TH.gridBg||"rgba(4,8,12,0.78)"),borderRadius:"6px",
+        border:"1px solid rgba("+(wrongFlash?"220,40,60":TH.glow)+","+(wrongFlash?0.35:0.08+cc*0.025)+")",
+        boxShadow:wrongFlash?"0 0 50px rgba(220,30,50,0.2)":cc>0?"0 0 "+(12+cc*10)+"px rgba("+TH.glow+","+(0.06+cc*0.04)+")":"0 4px 24px rgba(0,0,0,0.6)",
+        touchAction:"manipulation"}},
+        grid.map((v,i)=>e("div",{key:i,
+          onTouchStart:(ev)=>{ev.preventDefault();handleCellClick(i,true);},
+          onClick:()=>handleCellClick(i,false),
+          style:getCellStyle(i),role:"button"}))),
+      gameState===GS.READY&&e("div",{
+        onTouchStart:(ev)=>{ev.preventDefault();triggerCountdownFromReady();},
+        onClick:triggerCountdownFromReady,
+        style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
+          borderRadius:"6px",cursor:"pointer",zIndex:5,background:TH.isLight?"rgba(240,235,248,0.5)":"rgba(4,8,12,0.5)"}},
+        e("div",{style:{fontSize:"26px",fontFamily:F_DISPLAY,color:TH.primary,letterSpacing:"4px",
+          textTransform:"uppercase",textShadow:"0 0 20px rgba("+TH.glow+",0.3)",
+          animation:"pulse 1.5s ease-in-out infinite"}},"TAP TO START"))
+    ),
+
+    // ROUND CLEAR
+    gameState===GS.ROUND_CLEAR&&e("div",{style:{position:"absolute",bottom:"38%",fontSize:"26px",fontFamily:F_DISPLAY,
+      color:TH.accent,letterSpacing:"3px",textTransform:"uppercase",zIndex:20,
+      textShadow:"0 0 20px rgba("+TH.glow+",0.4)",animation:"fadeUp 1s ease forwards"}},
+      mode===MODES.ENDURANCE?"ROUND "+round+" CLEAR":lastClearTime.toFixed(2)+"s"),
+
+    // BACK
+    isPlaying&&e("button",{onClick:()=>{stopTimer();setTimer(0);timerRef.current=0;setStreakGlow(0);setWrongFlash(false);setGameState(GS.MENU);setShowModeSelect(true);},
+      style:{position:"fixed",top:"14px",left:"14px",background:"rgba(255,255,255,0.03)",
+        border:"1px solid rgba(255,255,255,0.06)",borderRadius:"4px",padding:"6px 16px",fontSize:"16px",
+        fontFamily:F_BODY,fontWeight:700,color:TH.textDimmer,cursor:"pointer",zIndex:20,letterSpacing:"1px"}},"← BACK"),
+
+    // SETTINGS GEAR
+    gameState===GS.MENU&&e("button",{onClick:()=>setShowSettings(true),
+      style:{position:"fixed",top:"14px",right:"14px",background:"rgba(255,255,255,0.03)",
+        border:"1px solid rgba(255,255,255,0.06)",borderRadius:"4px",padding:"6px 12px",fontSize:"20px",
+        color:TH.textDim,cursor:"pointer",zIndex:20,lineHeight:1}},"⚙"),
+
+    // SETTINGS OVERLAY
+    showSettings&&e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:"20px",zIndex:300,background:TH.overlayBg}},
+      e("div",{style:{fontSize:"28px",fontFamily:F_DISPLAY,color:TH.text,letterSpacing:"3px",marginBottom:"10px"}},"SETTINGS"),
+
+      e("div",{onClick:()=>{setSoundEnabled(p=>!p);setTimeout(()=>persistState(),50);},
+        style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"min(80vw,280px)",
+          padding:"14px 18px",background:TH.surface,borderRadius:"8px",cursor:"pointer",
+          border:"1px solid rgba("+TH.borderGlow+",0.1)"}},
+        e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.text}},"Sound Effects"),
+        e("div",{style:{width:"48px",height:"26px",borderRadius:"13px",position:"relative",
+          background:soundEnabled?TH.primary:"rgba(255,255,255,0.1)",transition:"background 0.3s"}},
+          e("div",{style:{width:"22px",height:"22px",borderRadius:"50%",background:"#fff",position:"absolute",
+            top:"2px",left:soundEnabled?"24px":"2px",transition:"left 0.3s",
+            boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
+      ),
+
+      e("div",{onClick:()=>{setMusicEnabled(p=>!p);setTimeout(()=>persistState(),50);},
+        style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"min(80vw,280px)",
+          padding:"14px 18px",background:TH.surface,borderRadius:"8px",cursor:"pointer",
+          border:"1px solid rgba("+TH.borderGlow+",0.1)"}},
+        e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.text}},"Background Music"),
+        e("div",{style:{width:"48px",height:"26px",borderRadius:"13px",position:"relative",
+          background:musicEnabled?TH.primary:"rgba(255,255,255,0.1)",transition:"background 0.3s"}},
+          e("div",{style:{width:"22px",height:"22px",borderRadius:"50%",background:"#fff",position:"absolute",
+            top:"2px",left:musicEnabled?"24px":"2px",transition:"left 0.3s",
+            boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
+      ),
+
+      e("div",{onClick:()=>{setHapticEnabled(p=>!p);setTimeout(()=>persistState(),50);},
+        style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"min(80vw,280px)",
+          padding:"14px 18px",background:TH.surface,borderRadius:"8px",cursor:"pointer",
+          border:"1px solid rgba("+TH.borderGlow+",0.1)"}},
+        e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.text}},"Haptic Feedback"),
+        e("div",{style:{width:"48px",height:"26px",borderRadius:"13px",position:"relative",
+          background:hapticEnabled?TH.primary:"rgba(255,255,255,0.1)",transition:"background 0.3s"}},
+          e("div",{style:{width:"22px",height:"22px",borderRadius:"50%",background:"#fff",position:"absolute",
+            top:"2px",left:hapticEnabled?"24px":"2px",transition:"left 0.3s",
+            boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
+      ),
+
+      e("div",{style:{marginTop:"12px",fontSize:"14px",fontFamily:F_BODY,fontWeight:600,color:TH.textDim,letterSpacing:"3px",textAlign:"center"}},"THEME"),
+      e("div",{style:{display:"flex",gap:"14px",marginTop:"8px"}},
+        Object.keys(THEMES).map(k=>e("div",{key:k,
+          onClick:()=>{setThemeName(k);setTimeout(()=>persistState(),50);},
+          style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",cursor:"pointer"}},
+          e("div",{style:{width:"40px",height:"40px",borderRadius:"50%",overflow:"hidden",
+            background:k==="rainbow"?"conic-gradient(#e06060,#e0c040,#40c080,#6080e0,#a060d0,#e06060)":THEMES[k].primary,
+            outline:k===themeName?"3px solid #fff":"3px solid transparent",outlineOffset:"2px",
+            boxShadow:k===themeName?"0 0 14px "+(k==="rainbow"?"rgba(100,200,255,0.5)":THEMES[k].primary):"none",
+            transition:"all 0.2s"}}),
+          e("div",{style:{fontSize:"9px",fontFamily:F_BODY,color:k===themeName?TH.text:TH.textDim,
+            letterSpacing:"1px"}},THEMES[k].name)
+        ))
+      ),
+
+      e("button",{onClick:()=>setShowSettings(false),style:{marginTop:"20px",padding:"12px 36px",fontSize:"20px",
+        fontFamily:F_DISPLAY,background:"rgba(255,255,255,0.04)",color:TH.textDim,
+        border:"1px solid rgba(255,255,255,0.08)",borderRadius:"6px",cursor:"pointer",letterSpacing:"2px"}},"CLOSE"),
+
+      // Support + Contact
+      e("div",{style:{marginTop:"24px",display:"flex",gap:"10px",alignItems:"center",justifyContent:"center"}},
+        e("span",{style:{fontSize:"13px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer}},"Support:"),
+        e("a",{href:VENMO_URL,target:"_blank",rel:"noopener",
+          style:{padding:"4px 12px",fontSize:"13px",fontFamily:F_DISPLAY,
+            background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
+            borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"Venmo"),
+        e("a",{href:PAYPAL_URL,target:"_blank",rel:"noopener",
+          style:{padding:"4px 12px",fontSize:"13px",fontFamily:F_DISPLAY,
+            background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
+            borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"PayPal"),
+        e("a",{href:"mailto:xonsult+9square@gmail.com?subject=9square%20feedback",
+          style:{padding:"4px 12px",fontSize:"13px",fontFamily:F_DISPLAY,
+            background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
+            borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"Contact")
+      ),
+      e("div",{style:{marginTop:"12px",fontSize:"12px",fontFamily:F_BODY,color:TH.textDimmer,letterSpacing:"1px"}},"v1.4")
+    )
+  );
+}
+
+
+ReactDOM.render(e(NineSquare), document.getElementById("root"));
+</script>
+</body>
+</html>
