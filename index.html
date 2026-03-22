@@ -348,18 +348,16 @@ function NineSquare() {
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { gridRef.current = grid; }, [grid]);
   useEffect(() => { todayBadgesRef.current = todayBadges; }, [todayBadges]);
-  useEffect(() => { AudioEngine.enabled = soundEnabled; AudioEngine.volume = soundVolume; }, [soundEnabled, soundVolume]);
+  useEffect(() => { AudioEngine.enabled = soundEnabled && soundVolume > 0; AudioEngine.volume = soundVolume; }, [soundEnabled, soundVolume]);
   useEffect(() => {
-    const isGameplay = [GS.PLAYING,GS.COUNTDOWN,GS.ROUND_CLEAR,GS.READY].includes(gameState);
-    const isActive = [GS.PLAYING,GS.COUNTDOWN].includes(gameState);
-    if (musicEnabled && isGameplay) {
+    if (musicEnabled && musicVolume > 0 && gameState !== GS.SPLASH) {
       AudioEngine.startMusic();
-      // Duck volume during active play, full volume during ready/round clear
+      const isActive = [GS.PLAYING,GS.COUNTDOWN].includes(gameState);
       if (AudioEngine.music) AudioEngine.music.volume = isActive ? musicVolume * 0.5 : musicVolume;
     } else {
       AudioEngine.stopMusic();
     }
-  }, [musicEnabled, gameState, musicVolume]);
+  }, [musicEnabled, musicVolume, gameState]);
   const haptic = () => { if (hapticEnabled && navigator.vibrate) navigator.vibrate(8); };
 
   // Splash screen — triangles, presents cycles twice, elegant fade out
@@ -1054,10 +1052,13 @@ function NineSquare() {
               top:"2px",left:soundEnabled?"24px":"2px",transition:"left 0.3s",
               boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
         ),
-        soundEnabled&&e("input",{type:"range",min:"0",max:"100",value:Math.round(soundVolume*100),
-          onClick:(ev)=>ev.stopPropagation(),
-          onChange:(ev)=>{setSoundVolume(ev.target.value/100);setTimeout(()=>persistState(),50);},
-          style:{width:"100%",marginTop:"10px",accentColor:TH.primary,cursor:"pointer"}})
+        soundEnabled&&e("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginTop:"10px"}},
+          e("input",{type:"range",min:"0",max:"100",value:Math.round(soundVolume*100),
+            onClick:(ev)=>ev.stopPropagation(),
+            onChange:(ev)=>{setSoundVolume(ev.target.value/100);setTimeout(()=>persistState(),50);},
+            style:{flex:1,accentColor:TH.primary,cursor:"pointer"}}),
+          e("div",{style:{fontSize:"12px",fontFamily:F_BODY,fontWeight:600,color:soundVolume===0?TH.danger:TH.textDim,
+            minWidth:"36px",textAlign:"right"}},soundVolume===0?"MUTE":Math.round(soundVolume*100)+"%"))
       ),
 
       // Background Music - toggle + volume slider
@@ -1072,13 +1073,16 @@ function NineSquare() {
               top:"2px",left:musicEnabled?"24px":"2px",transition:"left 0.3s",
               boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
         ),
-        musicEnabled&&e("input",{type:"range",min:"0",max:"100",value:Math.round(musicVolume*100),
-          onClick:(ev)=>ev.stopPropagation(),
-          onChange:(ev)=>{setMusicVolume(ev.target.value/100);
-            if(AudioEngine.music)AudioEngine.music.volume=ev.target.value/100*(
-              [GS.PLAYING,GS.COUNTDOWN].includes(gsRef.current)?0.5:1);
-            setTimeout(()=>persistState(),50);},
-          style:{width:"100%",marginTop:"10px",accentColor:TH.primary,cursor:"pointer"}})
+        musicEnabled&&e("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginTop:"10px"}},
+          e("input",{type:"range",min:"0",max:"100",value:Math.round(musicVolume*100),
+            onClick:(ev)=>ev.stopPropagation(),
+            onChange:(ev)=>{setMusicVolume(ev.target.value/100);
+              if(AudioEngine.music)AudioEngine.music.volume=ev.target.value/100*(
+                [GS.PLAYING,GS.COUNTDOWN].includes(gsRef.current)?0.5:1);
+              setTimeout(()=>persistState(),50);},
+            style:{flex:1,accentColor:TH.primary,cursor:"pointer"}}),
+          e("div",{style:{fontSize:"12px",fontFamily:F_BODY,fontWeight:600,color:musicVolume===0?TH.danger:TH.textDim,
+            minWidth:"36px",textAlign:"right"}},musicVolume===0?"MUTE":Math.round(musicVolume*100)+"%"))
       ),
 
       // Haptic Feedback - toggle only
