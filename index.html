@@ -124,9 +124,32 @@ const THEMES = {
 const AudioEngine = {
   ctx: null,
   enabled: true,
+  music: null,
+  musicPlaying: false,
   init() {
     if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (this.ctx.state === "suspended") this.ctx.resume();
+  },
+  initMusic() {
+    if (!this.music) {
+      this.music = new Audio("9squaretheme.mp3");
+      this.music.loop = true;
+      this.music.volume = 0.3;
+    }
+  },
+  startMusic() {
+    this.initMusic();
+    if (!this.musicPlaying) {
+      this.music.play().catch(()=>{});
+      this.musicPlaying = true;
+    }
+  },
+  stopMusic() {
+    if (this.music && this.musicPlaying) {
+      this.music.pause();
+      this.music.currentTime = 0;
+      this.musicPlaying = false;
+    }
   },
   playTone(step, type) {
     if (!this.enabled) return;
@@ -322,6 +345,11 @@ function NineSquare() {
   useEffect(() => { gridRef.current = grid; }, [grid]);
   useEffect(() => { todayBadgesRef.current = todayBadges; }, [todayBadges]);
   useEffect(() => { AudioEngine.enabled = soundEnabled; }, [soundEnabled]);
+  useEffect(() => {
+    const playing = [GS.PLAYING,GS.COUNTDOWN,GS.ROUND_CLEAR,GS.READY].includes(gameState);
+    if (musicEnabled && playing) AudioEngine.startMusic();
+    else AudioEngine.stopMusic();
+  }, [musicEnabled, gameState]);
   const haptic = () => { if (hapticEnabled && navigator.vibrate) navigator.vibrate(8); };
 
   // Splash screen — triangles, presents cycles twice, elegant fade out
@@ -1075,7 +1103,7 @@ function NineSquare() {
             background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
             borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"Contact")
       ),
-      e("div",{style:{marginTop:"12px",fontSize:"12px",fontFamily:F_BODY,color:TH.textDimmer,letterSpacing:"1px"}},"v1.4")
+      e("div",{style:{marginTop:"12px",fontSize:"12px",fontFamily:F_BODY,color:TH.textDimmer,letterSpacing:"1px"}},"v1.5")
     )
   );
 }
