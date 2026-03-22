@@ -124,6 +124,7 @@ const THEMES = {
 const AudioEngine = {
   ctx: null,
   enabled: true,
+  volume: 0.8,
   music: null,
   musicPlaying: false,
   init() {
@@ -134,7 +135,6 @@ const AudioEngine = {
     if (!this.music) {
       this.music = new Audio("9squaretheme.mp3");
       this.music.loop = true;
-      this.music.volume = 0.3;
     }
   },
   startMusic() {
@@ -155,21 +155,21 @@ const AudioEngine = {
     if (!this.enabled) return;
     this.init();
     const ctx = this.ctx;
+    const v = this.volume;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     if (type === "correct") {
       const freqs = [261.6,293.7,329.6,349.2,392.0,440.0,493.9,523.3,587.3];
       osc.frequency.value = freqs[step]||523.3; osc.type = "sine";
-      gain.gain.setValueAtTime(0.15,ctx.currentTime);
+      gain.gain.setValueAtTime(0.15*v,ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.25);
       osc.start(); osc.stop(ctx.currentTime+0.25);
     } else if (type === "wrong") {
-      // Soft two-tone descending "dip" — much gentler than the old sawtooth buzz
       osc.frequency.setValueAtTime(320,ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(180,ctx.currentTime+0.15);
       osc.type = "sine";
-      gain.gain.setValueAtTime(0.1,ctx.currentTime);
+      gain.gain.setValueAtTime(0.1*v,ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.25);
       osc.start(); osc.stop(ctx.currentTime+0.25);
     } else if (type === "clear") {
@@ -177,13 +177,13 @@ const AudioEngine = {
         const o = ctx.createOscillator(); const g = ctx.createGain();
         o.connect(g); g.connect(ctx.destination);
         o.frequency.value = f; o.type = "sine";
-        g.gain.setValueAtTime(0.12,ctx.currentTime+i*0.08);
+        g.gain.setValueAtTime(0.12*v,ctx.currentTime+i*0.08);
         g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+i*0.08+0.3);
         o.start(ctx.currentTime+i*0.08); o.stop(ctx.currentTime+i*0.08+0.3);
       });
     } else if (type === "countdown") {
       osc.frequency.value = 660; osc.type = "sine";
-      gain.gain.setValueAtTime(0.08,ctx.currentTime);
+      gain.gain.setValueAtTime(0.08*v,ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.15);
       osc.start(); osc.stop(ctx.currentTime+0.15);
     }
@@ -268,7 +268,9 @@ function NineSquare() {
   const [newBadgeIds, setNewBadgeIds] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(saved.current?.soundEnabled !== false);
+  const [soundVolume, setSoundVolume] = useState(saved.current?.soundVolume ?? 0.8);
   const [musicEnabled, setMusicEnabled] = useState(saved.current?.musicEnabled || false);
+  const [musicVolume, setMusicVolume] = useState(saved.current?.musicVolume ?? 0.3);
   const [hapticEnabled, setHapticEnabled] = useState(saved.current?.hapticEnabled !== false);
   const [themeName, setThemeName] = useState(saved.current?.theme || "green");
   const [grid, setGrid] = useState(() => shuffleArray());
@@ -334,22 +336,30 @@ function NineSquare() {
       lastDate: getTodayStr(),
       allBadgesYesterday: allBadges,
       soundEnabled: soundEnabled,
+      soundVolume: soundVolume,
       musicEnabled: musicEnabled,
+      musicVolume: musicVolume,
       hapticEnabled: hapticEnabled,
       theme: themeName,
     });
-  }, [enduranceBest, dailyStreak, dailyTime, soundEnabled, musicEnabled, hapticEnabled, themeName]);
+  }, [enduranceBest, dailyStreak, dailyTime, soundEnabled, soundVolume, musicEnabled, musicVolume, hapticEnabled, themeName]);
 
   useEffect(() => { gsRef.current = gameState; }, [gameState]);
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { gridRef.current = grid; }, [grid]);
   useEffect(() => { todayBadgesRef.current = todayBadges; }, [todayBadges]);
-  useEffect(() => { AudioEngine.enabled = soundEnabled; }, [soundEnabled]);
+  useEffect(() => { AudioEngine.enabled = soundEnabled; AudioEngine.volume = soundVolume; }, [soundEnabled, soundVolume]);
   useEffect(() => {
-    const playing = [GS.PLAYING,GS.COUNTDOWN,GS.ROUND_CLEAR,GS.READY].includes(gameState);
-    if (musicEnabled && playing) AudioEngine.startMusic();
-    else AudioEngine.stopMusic();
-  }, [musicEnabled, gameState]);
+    const isGameplay = [GS.PLAYING,GS.COUNTDOWN,GS.ROUND_CLEAR,GS.READY].includes(gameState);
+    const isActive = [GS.PLAYING,GS.COUNTDOWN].includes(gameState);
+    if (musicEnabled && isGameplay) {
+      AudioEngine.startMusic();
+      // Duck volume during active play, full volume during ready/round clear
+      if (AudioEngine.music) AudioEngine.music.volume = isActive ? musicVolume * 0.5 : musicVolume;
+    } else {
+      AudioEngine.stopMusic();
+    }
+  }, [musicEnabled, gameState, musicVolume]);
   const haptic = () => { if (hapticEnabled && navigator.vibrate) navigator.vibrate(8); };
 
   // Splash screen — triangles, presents cycles twice, elegant fade out
@@ -1032,30 +1042,46 @@ function NineSquare() {
       alignItems:"center",justifyContent:"center",gap:"20px",zIndex:300,background:TH.overlayBg}},
       e("div",{style:{fontSize:"28px",fontFamily:F_DISPLAY,color:TH.text,letterSpacing:"3px",marginBottom:"10px"}},"SETTINGS"),
 
-      e("div",{onClick:()=>{setSoundEnabled(p=>!p);setTimeout(()=>persistState(),50);},
-        style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"min(80vw,280px)",
-          padding:"14px 18px",background:TH.surface,borderRadius:"8px",cursor:"pointer",
-          border:"1px solid rgba("+TH.borderGlow+",0.1)"}},
-        e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.text}},"Sound Effects"),
-        e("div",{style:{width:"48px",height:"26px",borderRadius:"13px",position:"relative",
-          background:soundEnabled?TH.primary:"rgba(255,255,255,0.1)",transition:"background 0.3s"}},
-          e("div",{style:{width:"22px",height:"22px",borderRadius:"50%",background:"#fff",position:"absolute",
-            top:"2px",left:soundEnabled?"24px":"2px",transition:"left 0.3s",
-            boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
+      // Sound Effects - toggle + volume slider
+      e("div",{style:{width:"min(80vw,280px)",padding:"14px 18px",background:TH.surface,borderRadius:"8px",
+        border:"1px solid rgba("+TH.borderGlow+",0.1)"}},
+        e("div",{onClick:()=>{setSoundEnabled(p=>!p);setTimeout(()=>persistState(),50);},
+          style:{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}},
+          e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.text}},"Sound Effects"),
+          e("div",{style:{width:"48px",height:"26px",borderRadius:"13px",position:"relative",
+            background:soundEnabled?TH.primary:"rgba(255,255,255,0.1)",transition:"background 0.3s"}},
+            e("div",{style:{width:"22px",height:"22px",borderRadius:"50%",background:"#fff",position:"absolute",
+              top:"2px",left:soundEnabled?"24px":"2px",transition:"left 0.3s",
+              boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
+        ),
+        soundEnabled&&e("input",{type:"range",min:"0",max:"100",value:Math.round(soundVolume*100),
+          onClick:(ev)=>ev.stopPropagation(),
+          onChange:(ev)=>{setSoundVolume(ev.target.value/100);setTimeout(()=>persistState(),50);},
+          style:{width:"100%",marginTop:"10px",accentColor:TH.primary,cursor:"pointer"}})
       ),
 
-      e("div",{onClick:()=>{setMusicEnabled(p=>!p);setTimeout(()=>persistState(),50);},
-        style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"min(80vw,280px)",
-          padding:"14px 18px",background:TH.surface,borderRadius:"8px",cursor:"pointer",
-          border:"1px solid rgba("+TH.borderGlow+",0.1)"}},
-        e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.text}},"Background Music"),
-        e("div",{style:{width:"48px",height:"26px",borderRadius:"13px",position:"relative",
-          background:musicEnabled?TH.primary:"rgba(255,255,255,0.1)",transition:"background 0.3s"}},
-          e("div",{style:{width:"22px",height:"22px",borderRadius:"50%",background:"#fff",position:"absolute",
-            top:"2px",left:musicEnabled?"24px":"2px",transition:"left 0.3s",
-            boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
+      // Background Music - toggle + volume slider
+      e("div",{style:{width:"min(80vw,280px)",padding:"14px 18px",background:TH.surface,borderRadius:"8px",
+        border:"1px solid rgba("+TH.borderGlow+",0.1)"}},
+        e("div",{onClick:()=>{setMusicEnabled(p=>!p);setTimeout(()=>persistState(),50);},
+          style:{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}},
+          e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.text}},"Background Music"),
+          e("div",{style:{width:"48px",height:"26px",borderRadius:"13px",position:"relative",
+            background:musicEnabled?TH.primary:"rgba(255,255,255,0.1)",transition:"background 0.3s"}},
+            e("div",{style:{width:"22px",height:"22px",borderRadius:"50%",background:"#fff",position:"absolute",
+              top:"2px",left:musicEnabled?"24px":"2px",transition:"left 0.3s",
+              boxShadow:"0 1px 3px rgba(0,0,0,0.3)"}}))
+        ),
+        musicEnabled&&e("input",{type:"range",min:"0",max:"100",value:Math.round(musicVolume*100),
+          onClick:(ev)=>ev.stopPropagation(),
+          onChange:(ev)=>{setMusicVolume(ev.target.value/100);
+            if(AudioEngine.music)AudioEngine.music.volume=ev.target.value/100*(
+              [GS.PLAYING,GS.COUNTDOWN].includes(gsRef.current)?0.5:1);
+            setTimeout(()=>persistState(),50);},
+          style:{width:"100%",marginTop:"10px",accentColor:TH.primary,cursor:"pointer"}})
       ),
 
+      // Haptic Feedback - toggle only
       e("div",{onClick:()=>{setHapticEnabled(p=>!p);setTimeout(()=>persistState(),50);},
         style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"min(80vw,280px)",
           padding:"14px 18px",background:TH.surface,borderRadius:"8px",cursor:"pointer",
