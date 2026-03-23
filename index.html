@@ -542,6 +542,7 @@ function NineSquare() {
       "🔥 Daily Streak: "+currentStreak,
       "Badges earned: "+earned.map(b=>b.icon).join(" ")+" ("+earned.length+"/5)",
       classicBestTime<Infinity?"⚡ Best: "+classicBestTime.toFixed(2)+"s":"",
+      dailyTime!==null?"📅 Daily: "+dailyTime.toFixed(2)+"s":"",
       enduranceBest.round>0?"🏔 Endurance: Round "+enduranceBest.round:"",
       "Can you beat me?",
       "Play Now » https://9square.xonsult.com"
@@ -910,10 +911,17 @@ function NineSquare() {
         textShadow:"0 0 40px rgba("+TH.glow+",0.25)",letterSpacing:"4px"}},"DAILY SOLVED"),
       e("div",{style:{fontSize:"80px",fontFamily:F_DISPLAY,color:TH.primaryBright,
         textShadow:"0 0 30px rgba("+TH.glow+",0.25)"}},dailyTime?dailyTime.toFixed(2)+"s":""),
+      e("div",{style:{fontSize:"18px",fontFamily:F_BODY,fontWeight:600,color:TH.textDim,letterSpacing:"1px"}},
+        (()=>{const d=new Date();return(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear();})()),
       e("div",{style:{fontSize:"20px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer,letterSpacing:"2px"}},"Come back tomorrow :)"),
-      e("button",{onClick:()=>{setGameState(GS.MENU);setShowModeSelect(true);},style:{marginTop:"22px",padding:"16px 34px",
-        fontSize:"24px",fontFamily:F_DISPLAY,background:"rgba(255,255,255,0.03)",color:TH.primary,
-        border:"1px solid rgba("+TH.borderGlow+",0.18)",borderRadius:"6px",cursor:"pointer",letterSpacing:"3px"}},"MENU")
+      e("div",{style:{display:"flex",gap:"12px",marginTop:"22px"}},
+        e("button",{onClick:handleShare,style:{padding:"16px 34px",
+          fontSize:"24px",fontFamily:F_DISPLAY,
+          background:"rgba("+TH.borderGlow+",0.12)",color:TH.primary,
+          border:"1px solid rgba("+TH.borderGlow+",0.22)",borderRadius:"6px",cursor:"pointer",letterSpacing:"3px"}},"SHARE"),
+        e("button",{onClick:()=>{setGameState(GS.MENU);setShowModeSelect(true);},style:{padding:"16px 34px",
+          fontSize:"24px",fontFamily:F_DISPLAY,background:"rgba(255,255,255,0.03)",color:TH.primary,
+          border:"1px solid rgba("+TH.borderGlow+",0.18)",borderRadius:"6px",cursor:"pointer",letterSpacing:"3px"}},"MENU"))
     ),
 
     // HUD
