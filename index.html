@@ -273,6 +273,12 @@ function NineSquare() {
   const tutorialTouchStart = useRef(null);
   const [showBadgeOverlay, setShowBadgeOverlay] = useState(false);
   const [newBadgeIds, setNewBadgeIds] = useState([]);
+  const [resetSliderX, setResetSliderX] = useState(0); // 0 to 1
+  const [resetCountdown, setResetCountdown] = useState(0); // 0=inactive, 5,4,3,2,1=counting
+  const [resetDone, setResetDone] = useState(false);
+  const [showResetScreen, setShowResetScreen] = useState(false);
+  const resetIntervalRef = useRef(null);
+  const resetSliderRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(saved.current?.soundEnabled !== false);
   const [soundVolume, setSoundVolume] = useState(saved.current?.soundVolume ?? 0.8);
@@ -356,6 +362,31 @@ function NineSquare() {
   useEffect(() => { gridRef.current = grid; }, [grid]);
   useEffect(() => { todayBadgesRef.current = todayBadges; }, [todayBadges]);
   useEffect(() => { AudioEngine.enabled = soundEnabled && soundVolume > 0; AudioEngine.volume = soundVolume; }, [soundEnabled, soundVolume]);
+  
+  // Reset stats countdown
+  useEffect(()=>{
+    if(resetCountdown>0){
+      resetIntervalRef.current=setTimeout(()=>{
+        if(resetCountdown===1){
+          // Execute reset
+          localStorage.removeItem("9sq");
+          setClassicBestTime(Infinity);classicBestTimeRef.current=Infinity;
+          setClassicTotalTime(0);classicTotalTimeRef.current=0;
+          setClassicTotalSolves(0);classicTotalSolvesRef.current=0;
+          setClassicSolves(0);classicSolvesRef.current=0;
+          setEnduranceBest({round:0,clearTime:Infinity});
+          setDailyTime(null);setDailyStreak(0);
+          setTodayBadges({solver:false,quick:false,builder:false,speedy:false,bragger:false});
+          todayBadgesRef.current={solver:false,quick:false,builder:false,speedy:false,bragger:false};
+          setResetCountdown(0);setResetDone(true);
+          setTimeout(()=>{setResetDone(false);setResetSliderX(0);},3000);
+        } else {
+          setResetCountdown(resetCountdown-1);
+        }
+      },1000);
+    }
+    return ()=>clearTimeout(resetIntervalRef.current);
+  },[resetCountdown]);
   useEffect(() => {
     if (musicEnabled && musicVolume > 0 && gameState !== GS.SPLASH) {
       AudioEngine.startMusic();
@@ -1156,6 +1187,11 @@ function NineSquare() {
         fontFamily:F_DISPLAY,background:"rgba(255,255,255,0.04)",color:TH.textDim,
         border:"1px solid rgba(255,255,255,0.08)",borderRadius:"6px",cursor:"pointer",letterSpacing:"2px"}},"CLOSE"),
 
+      // Reset link
+      e("div",{onClick:()=>{setShowSettings(false);setShowResetScreen(true);setResetSliderX(0);setResetCountdown(0);setResetDone(false);},
+        style:{marginTop:"18px",fontSize:"13px",fontFamily:F_BODY,color:TH.textDimmer,cursor:"pointer",
+          textDecoration:"underline",letterSpacing:"1px"}},"Reset all stats"),
+
       // Support + Contact
       e("div",{style:{marginTop:"24px",display:"flex",gap:"10px",alignItems:"center",justifyContent:"center"}},
         e("span",{style:{fontSize:"13px",fontFamily:F_BODY,fontWeight:600,color:TH.textDimmer}},"Support:"),
@@ -1173,6 +1209,76 @@ function NineSquare() {
             borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"Contact")
       ),
       e("div",{style:{marginTop:"12px",fontSize:"12px",fontFamily:F_BODY,color:TH.textDimmer,letterSpacing:"1px"}},"v1.52")
+    ),
+
+    // RESET STATS SCREEN
+    showResetScreen&&e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:"24px",zIndex:350,background:TH.overlayBg}},
+      
+      e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.danger,letterSpacing:"3px"}},"RESET ALL STATS"),
+      e("div",{style:{fontSize:"14px",fontFamily:F_BODY,color:TH.textDim,textAlign:"center",maxWidth:"280px",lineHeight:1.5}},
+        "This will permanently erase all your stats, badges, and streak. This cannot be undone."),
+
+      // Phase 1: Slider
+      resetCountdown===0&&!resetDone&&e("div",{style:{width:"90vw",maxWidth:"340px"}},
+        e("div",{ref:resetSliderRef,
+          onMouseDown:(ev)=>{
+            ev.preventDefault();
+            const rect=ev.currentTarget.getBoundingClientRect();
+            const handle=(ev2)=>{const x=Math.max(0,Math.min(1,(ev2.clientX-rect.left-20)/(rect.width-40)));setResetSliderX(x);};
+            const up=()=>{document.removeEventListener("mousemove",handle);document.removeEventListener("mouseup",up);
+              setResetSliderX(p=>{if(p>0.92){setResetCountdown(5);return 1;}return 0;});};
+            document.addEventListener("mousemove",handle);document.addEventListener("mouseup",up);
+          },
+          onTouchStart:(ev)=>{
+            const rect=ev.currentTarget.getBoundingClientRect();
+            const handle=(ev2)=>{const t=ev2.touches[0];const x=Math.max(0,Math.min(1,(t.clientX-rect.left-20)/(rect.width-40)));setResetSliderX(x);};
+            const up=()=>{document.removeEventListener("touchmove",handle);document.removeEventListener("touchend",up);
+              setResetSliderX(p=>{if(p>0.92){setResetCountdown(5);return 1;}return 0;});};
+            document.addEventListener("touchmove",handle,{passive:false});document.addEventListener("touchend",up);
+          },
+          style:{position:"relative",width:"100%",height:"48px",borderRadius:"24px",overflow:"hidden",
+            background:"rgba("+TH.borderGlow+",0.06)",border:"1px solid rgba("+TH.borderGlow+",0.12)",
+            userSelect:"none",touchAction:"none",cursor:"pointer"}},
+          e("div",{style:{position:"absolute",left:0,top:0,bottom:0,width:(resetSliderX*100)+"%",
+            background:"rgba(220,50,60,"+(0.08+resetSliderX*0.2)+")",borderRadius:"24px",
+            transition:resetSliderX===0?"width 0.3s":"none"}}),
+          e("div",{style:{position:"absolute",top:"6px",
+            left:"calc(4px + "+(resetSliderX*100)+"% - "+(resetSliderX*44)+"px)",
+            width:"36px",height:"36px",borderRadius:"50%",background:TH.danger,
+            boxShadow:"0 2px 8px rgba(0,0,0,0.3)",transition:resetSliderX===0?"left 0.3s":"none",
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px"}},
+            resetSliderX>0.85?"🗑️":"→"),
+          e("div",{style:{position:"relative",zIndex:1,lineHeight:"48px",fontSize:"14px",fontFamily:F_BODY,fontWeight:600,
+            color:TH.textDimmer,letterSpacing:"1px",pointerEvents:"none",textAlign:"center"}},
+            resetSliderX>0.5?"Keep sliding →":"Slide to reset →")
+        )
+      ),
+
+      // Phase 2: Countdown with abort
+      resetCountdown>0&&!resetDone&&e("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"16px"}},
+        e("div",{style:{fontSize:"64px",fontFamily:F_DISPLAY,color:TH.danger,letterSpacing:"4px",
+          textShadow:"0 0 30px "+TH.danger+"50"}},resetCountdown),
+        e("div",{style:{fontSize:"16px",fontFamily:F_BODY,fontWeight:600,color:TH.textDim}},"Deleting all stats..."),
+        e("button",{onClick:()=>{clearTimeout(resetIntervalRef.current);setResetCountdown(0);setResetSliderX(0);},
+          style:{padding:"16px 36px",fontSize:"20px",fontFamily:F_DISPLAY,
+            background:TH.danger,color:"#fff",border:"none",
+            borderRadius:"6px",cursor:"pointer",letterSpacing:"2px",
+            boxShadow:"0 0 24px "+TH.danger+"50",animation:"pulse 0.8s ease-in-out infinite"}},"WAIT STOP!")
+      ),
+
+      // Phase 3: Done
+      resetDone&&e("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"16px"}},
+        e("div",{style:{fontSize:"24px",fontFamily:F_DISPLAY,color:TH.primary,letterSpacing:"2px"}},"✓ All stats reset!"),
+        e("div",{style:{fontSize:"14px",fontFamily:F_BODY,color:TH.textDim}},"Starting fresh.")
+      ),
+
+      // Back / Cancel button
+      (resetCountdown===0)&&e("button",{onClick:()=>{clearTimeout(resetIntervalRef.current);setShowResetScreen(false);setResetSliderX(0);setResetCountdown(0);setResetDone(false);},
+        style:{marginTop:"16px",padding:"12px 32px",fontSize:"16px",fontFamily:F_DISPLAY,
+          background:"rgba(255,255,255,0.04)",color:TH.textDim,
+          border:"1px solid rgba(255,255,255,0.08)",borderRadius:"6px",cursor:"pointer",letterSpacing:"2px"}},
+        resetDone?"DONE":"CANCEL")
     )
   );
 }
