@@ -1085,6 +1085,8 @@ function NineSquare() {
           e("input",{type:"range",min:"0",max:"100",value:Math.round(soundVolume*100),
             onClick:(ev)=>ev.stopPropagation(),
             onChange:(ev)=>{setSoundVolume(ev.target.value/100);setTimeout(()=>persistState(),50);},
+            onMouseUp:()=>{if(soundVolume>0)AudioEngine.playTone(0,"clear");},
+            onTouchEnd:()=>{if(soundVolume>0)AudioEngine.playTone(0,"clear");},
             style:{flex:1,accentColor:TH.primary,cursor:"pointer"}}),
           e("div",{style:{fontSize:"12px",fontFamily:F_BODY,fontWeight:600,color:soundVolume===0?TH.danger:TH.textDim,
             minWidth:"36px",textAlign:"right"}},soundVolume===0?"MUTE":Math.round(soundVolume*100)+"%"))
@@ -1162,7 +1164,7 @@ function NineSquare() {
             background:"rgba("+TH.borderGlow+",0.1)",border:"1px solid rgba("+TH.borderGlow+",0.18)",
             borderRadius:"4px",color:TH.primary,cursor:"pointer",textDecoration:"none",letterSpacing:"1px"}},"Contact")
       ),
-      e("div",{style:{marginTop:"12px",fontSize:"12px",fontFamily:F_BODY,color:TH.textDimmer,letterSpacing:"1px"}},"v1.51")
+      e("div",{style:{marginTop:"12px",fontSize:"12px",fontFamily:F_BODY,color:TH.textDimmer,letterSpacing:"1px"}},"v1.52")
     )
   );
 }
